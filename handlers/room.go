@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"fmt"
-
 	"roomserve/database"
 	"roomserve/models"
 
@@ -22,11 +20,8 @@ func CreateRoom(c *fiber.Ctx) error {
 		Name:     json.Name,
 		Capacity: json.Capacity,
 	}
-	fmt.Println(newRoom)
 	err := db.Create(&newRoom).Error
-	fmt.Println("1")
 	if err != nil {
-		fmt.Println("2")
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 	return c.JSON(fiber.Map{
