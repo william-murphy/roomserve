@@ -10,41 +10,40 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateRoom(c *fiber.Ctx) error {
+func CreateBuilding(c *fiber.Ctx) error {
 	db := database.DB
-	json := new(models.Room)
+	json := new(models.Building)
 	if err := c.BodyParser(json); err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
-	newRoom := models.Room{
-		Name:     json.Name,
-		Capacity: json.Capacity,
+	newRoom := models.Building{
+		Name: json.Name,
 	}
 	err := db.Create(&newRoom).Error
 	if err != nil {
-		return c.Status(http.StatusBadRequest).SendString("Unable to create room")
+		return c.Status(http.StatusBadRequest).SendString("Unable to create building")
 	}
 	return c.Status(http.StatusCreated).JSON(newRoom)
 }
 
-func GetRooms(c *fiber.Ctx) error {
+func GetBuildings(c *fiber.Ctx) error {
 	db := database.DB
-	Rooms := []models.Room{}
-	db.Model(&models.Room{}).Order("ID asc").Limit(100).Find(&Rooms)
+	Rooms := []models.Building{}
+	db.Model(&models.Building{}).Order("ID asc").Limit(100).Find(&Rooms)
 	return c.Status(http.StatusOK).JSON(Rooms)
 }
 
-func GetRoom(c *fiber.Ctx) error {
+func GetBuilding(c *fiber.Ctx) error {
 	db := database.DB
 	id, err := c.ParamsInt("id")
 	if err != nil || id < 1 {
-		return c.Status(400).SendString("Invalid ID parameter")
+		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
-	room := models.Room{}
-	query := models.Room{ID: uint(id)}
+	room := models.Building{}
+	query := models.Building{ID: uint(id)}
 	err = db.First(&room, &query).Error
 	if err == gorm.ErrRecordNotFound {
-		return c.Status(http.StatusNotFound).SendString("Room not found")
+		return c.Status(http.StatusNotFound).SendString("Building not found")
 	}
 	return c.Status(http.StatusOK).JSON(room)
 }
