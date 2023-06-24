@@ -16,6 +16,9 @@ func Initialize(router *fiber.App) {
 
 	router.Use(middleware.Json)
 
+	userGroup := router.Group("/users")
+	userGroup.Post("/", handlers.CreateUser)
+
 	buildingGroup := router.Group("/buildings")
 	buildingGroup.Post("/", handlers.CreateBuilding)
 	buildingGroup.Get("/", handlers.GetBuildings)
@@ -30,9 +33,6 @@ func Initialize(router *fiber.App) {
 	roomGroup.Post("/", handlers.CreateRoom)
 	roomGroup.Get("/", handlers.GetRooms)
 	roomGroup.Get("/:id", handlers.GetRoom)
-
-	userGroup := router.Group("/users")
-	userGroup.Post("/", handlers.CreateUser)
 
 	router.Use(func(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotFound).SendString("Not Found")

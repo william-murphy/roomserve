@@ -13,14 +13,16 @@ import (
 func CreateFloor(c *fiber.Ctx) error {
 	db := database.DB
 	json := new(models.Floor)
-	if err := c.BodyParser(json); err != nil {
+	err := c.BodyParser(json)
+	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	newRoom := models.Floor{
-		Name:  json.Name,
-		Level: json.Level,
+		Name:       json.Name,
+		Level:      json.Level,
+		BuildingID: json.BuildingID,
 	}
-	err := db.Create(&newRoom).Error
+	err = db.Create(&newRoom).Error
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to create floor")
 	}
@@ -38,7 +40,7 @@ func GetFloor(c *fiber.Ctx) error {
 	db := database.DB
 	id, err := c.ParamsInt("id")
 	if err != nil || id < 1 {
-		return c.Status(400).SendString("Invalid ID parameter")
+		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
 	room := models.Floor{}
 	query := models.Floor{ID: uint(id)}

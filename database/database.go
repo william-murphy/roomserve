@@ -22,7 +22,7 @@ func Connect() {
 		panic("Couldn't connect to database.")
 	}
 
-	err = DB.AutoMigrate(&models.Room{}, &models.User{})
+	err = DB.AutoMigrate(&models.User{}, &models.Building{}, &models.Floor{}, &models.Room{})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,7 +1,7 @@
 package models
 
 type Building struct {
-	ID     uint    `gorm:"primaryKey"`
+	ID     uint    `gorm:"primaryKey" json:"id"`
 	Name   string  `json:"name"`
-	Floors []Floor `gorm:"foreignKey:BuildingID"`
+	Floors []Floor `gorm:"foreignKey:BuildingID" json:"-"`
 }

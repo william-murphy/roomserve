@@ -13,14 +13,16 @@ import (
 func CreateRoom(c *fiber.Ctx) error {
 	db := database.DB
 	json := new(models.Room)
-	if err := c.BodyParser(json); err != nil {
+	err := c.BodyParser(json)
+	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	newRoom := models.Room{
 		Name:     json.Name,
 		Capacity: json.Capacity,
+		FloorID:  json.FloorID,
 	}
-	err := db.Create(&newRoom).Error
+	err = db.Create(&newRoom).Error
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to create room")
 	}

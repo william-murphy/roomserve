@@ -13,13 +13,14 @@ import (
 func CreateBuilding(c *fiber.Ctx) error {
 	db := database.DB
 	json := new(models.Building)
-	if err := c.BodyParser(json); err != nil {
+	err := c.BodyParser(json)
+	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	newRoom := models.Building{
 		Name: json.Name,
 	}
-	err := db.Create(&newRoom).Error
+	err = db.Create(&newRoom).Error
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to create building")
 	}
