@@ -7,5 +7,3 @@ type Floor struct {
 	BuildingID uint   `json:"buildingId"`
 	Rooms      []Room `gorm:"foreignKey:FloorID" json:"-"`
 }
-
-// TODO: add gorm column things like max size and not null, etc

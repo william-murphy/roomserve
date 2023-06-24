@@ -12,7 +12,7 @@ import (
 
 func CreateUser(c *fiber.Ctx) error {
 	db := database.DB
-	json := new(models.UnregisteredUser)
+	json := new(models.RegisterUser)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")

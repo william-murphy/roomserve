@@ -16,20 +16,31 @@ func Initialize(router *fiber.App) {
 
 	router.Use(middleware.Json)
 
+	// auth
+	authGroup := router.Group("/auth")
+	authGroup.Post("/login", handlers.Login)
+
+	// user
 	userGroup := router.Group("/users")
 	userGroup.Post("/", handlers.CreateUser)
 
+	// building
 	buildingGroup := router.Group("/buildings")
+	buildingGroup.Use(middleware.Protected)
 	buildingGroup.Post("/", handlers.CreateBuilding)
 	buildingGroup.Get("/", handlers.GetBuildings)
 	buildingGroup.Get("/:id", handlers.GetBuilding)
 
+	// floor
 	floorGroup := router.Group("/floors")
+	floorGroup.Use(middleware.Protected)
 	floorGroup.Post("/", handlers.CreateFloor)
 	floorGroup.Get("/", handlers.GetFloors)
 	floorGroup.Get("/:id", handlers.GetFloor)
 
+	// room
 	roomGroup := router.Group("/rooms")
+	roomGroup.Use(middleware.Protected)
 	roomGroup.Post("/", handlers.CreateRoom)
 	roomGroup.Get("/", handlers.GetRooms)
 	roomGroup.Get("/:id", handlers.GetRoom)
