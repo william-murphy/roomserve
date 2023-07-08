@@ -25,22 +25,19 @@ func Initialize(router *fiber.App) {
 	userGroup.Post("/", handlers.CreateUser)
 
 	// building
-	buildingGroup := router.Group("/buildings")
-	buildingGroup.Use(middleware.Protected)
+	buildingGroup := router.Group("/buildings", middleware.Protected())
 	buildingGroup.Post("/", handlers.CreateBuilding)
 	buildingGroup.Get("/", handlers.GetBuildings)
 	buildingGroup.Get("/:id", handlers.GetBuilding)
 
 	// floor
-	floorGroup := router.Group("/floors")
-	floorGroup.Use(middleware.Protected)
+	floorGroup := router.Group("/floors", middleware.Protected())
 	floorGroup.Post("/", handlers.CreateFloor)
 	floorGroup.Get("/", handlers.GetFloors)
 	floorGroup.Get("/:id", handlers.GetFloor)
 
 	// room
-	roomGroup := router.Group("/rooms")
-	roomGroup.Use(middleware.Protected)
+	roomGroup := router.Group("/rooms", middleware.Protected())
 	roomGroup.Post("/", handlers.CreateRoom)
 	roomGroup.Get("/", handlers.GetRooms)
 	roomGroup.Get("/:id", handlers.GetRoom)

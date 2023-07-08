@@ -40,7 +40,7 @@ func GetRoom(c *fiber.Ctx) error {
 	db := database.DB
 	id, err := c.ParamsInt("id")
 	if err != nil || id < 1 {
-		return c.Status(400).SendString("Invalid ID parameter")
+		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
 	room := models.Room{}
 	query := models.Room{ID: uint(id)}
