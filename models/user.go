@@ -17,11 +17,11 @@ type RegisterUser struct {
 }
 
 type User struct {
-	ID        uint      `gorm:"primaryKey"`
+	ID        uint      `json:"id" gorm:"primaryKey"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
-	Name      string    `json:"name"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Password  []byte    `json:"-"`
+	Name      string    `json:"name" gorm:"not null"`
+	Username  string    `json:"username" gorm:"not null"`
+	Email     string    `json:"email" gorm:"not null"`
+	Password  []byte    `json:"-" gorm:"not null"`
 }

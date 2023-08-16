@@ -5,11 +5,10 @@ import (
 )
 
 type Floor struct {
-	ID         uint      `gorm:"primaryKey"`
+	ID         uint      `json:"id" gorm:"primaryKey"`
 	CreatedAt  time.Time `json:"createdAt"`
 	UpdatedAt  time.Time `json:"updatedAt"`
 	Name       string    `json:"name"`
-	Level      uint      `json:"level"`
-	BuildingID uint      `json:"buildingId"`
-	Rooms      []Room    `gorm:"foreignKey:FloorID" json:"-"`
+	BuildingID uint      `json:"buildingId" gorm:"not null"`
+	Rooms      []Room    `json:"-"`
 }

@@ -19,7 +19,6 @@ func CreateFloor(c *fiber.Ctx) error {
 	}
 	newRoom := models.Floor{
 		Name:       json.Name,
-		Level:      json.Level,
 		BuildingID: json.BuildingID,
 	}
 	err = db.Create(&newRoom).Error
