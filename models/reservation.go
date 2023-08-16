@@ -11,6 +11,7 @@ type DisplayReservation struct {
 	Start       time.Time   `json:"start"`
 	End         time.Time   `json:"end"`
 	CreatedBy   DisplayUser `json:"createdBy"`
+	Room        DisplayRoom `json:"room"`
 }
 
 type Reservation struct {
