@@ -20,8 +20,8 @@ type User struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
-	Name      string    `json:"name" gorm:"not null"`
-	Username  string    `json:"username" gorm:"not null"`
-	Email     string    `json:"email" gorm:"not null"`
+	Name      string    `json:"name" gorm:"size:128;not null"`
+	Username  string    `json:"username" gorm:"size:64;not null"`
+	Email     string    `json:"email" gorm:"size:256;not null"`
 	Password  []byte    `json:"-" gorm:"not null"`
 }
