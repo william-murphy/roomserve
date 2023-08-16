@@ -5,11 +5,13 @@ import (
 )
 
 type Reservation struct {
-	ID          uint       `json:"id" gorm:"primaryKey"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
-	Title       string     `json:"title" gorm:"size:64"`
-	Description string     `json:"description"`
-	Start       *time.Time `json:"start"`
-	End         *time.Time `json:"end"`
+	ID          uint `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Title       string `gorm:"size:64"`
+	Description string
+	Start       time.Time `gorm:"not null"`
+	End         time.Time `gorm:"not null"`
+	CreatedByID uint
+	CreatedBy   User
 }

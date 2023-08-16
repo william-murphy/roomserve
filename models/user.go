@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+type DisplayUser struct {
+	ID       uint   `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
 type LoginUser struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -17,11 +24,11 @@ type RegisterUser struct {
 }
 
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	Name      string    `json:"name" gorm:"size:128;not null"`
-	Username  string    `json:"username" gorm:"size:64;not null"`
-	Email     string    `json:"email" gorm:"size:256;not null"`
-	Password  []byte    `json:"-" gorm:"not null"`
+	ID        uint `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string `gorm:"size:128;not null"`
+	Username  string `gorm:"size:64;not null"`
+	Email     string `gorm:"size:256;not null"`
+	Password  []byte `gorm:"not null"`
 }
