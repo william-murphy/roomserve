@@ -17,21 +17,21 @@ func CreateBuilding(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
-	newRoom := models.Building{
+	newBuilding := models.Building{
 		Name: json.Name,
 	}
-	err = db.Create(&newRoom).Error
+	err = db.Create(&newBuilding).Error
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to create building")
 	}
-	return c.Status(http.StatusCreated).JSON(newRoom)
+	return c.Status(http.StatusCreated).JSON(newBuilding)
 }
 
 func GetBuildings(c *fiber.Ctx) error {
 	db := database.DB
-	Rooms := []models.Building{}
-	db.Model(&models.Building{}).Order("ID asc").Limit(100).Find(&Rooms)
-	return c.Status(http.StatusOK).JSON(Rooms)
+	Buildings := []models.Building{}
+	db.Model(&models.Building{}).Order("ID asc").Limit(100).Find(&Buildings)
+	return c.Status(http.StatusOK).JSON(Buildings)
 }
 
 func GetBuilding(c *fiber.Ctx) error {
@@ -40,11 +40,36 @@ func GetBuilding(c *fiber.Ctx) error {
 	if err != nil || id < 1 {
 		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
-	room := models.Building{}
+	building := models.Building{}
 	query := models.Building{ID: uint(id)}
-	err = db.First(&room, &query).Error
+	err = db.First(&building, &query).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Building not found")
 	}
-	return c.Status(http.StatusOK).JSON(room)
+	return c.Status(http.StatusOK).JSON(building)
+}
+
+func UpdateBuilding(c *fiber.Ctx) error {
+	db := database.DB
+	id, err := c.ParamsInt("id")
+	if err != nil || id < 1 {
+		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
+	}
+	json := new(models.CreateBuilding)
+	err = c.BodyParser(json)
+	if err != nil {
+		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
+	}
+	building := models.Building{}
+	query := models.Building{ID: uint(id)}
+	err = db.First(&building, &query).Error
+	if err == gorm.ErrRecordNotFound {
+		return c.Status(http.StatusNotFound).SendString("Building not found")
+	}
+	building.Name = json.Name
+	err = db.Save(&building).Error
+	if err != nil {
+		return c.Status(http.StatusBadRequest).SendString("Unable to update building")
+	}
+	return c.Status(http.StatusOK).JSON(building)
 }

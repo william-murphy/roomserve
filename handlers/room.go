@@ -50,3 +50,30 @@ func GetRoom(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(room)
 }
+
+func UpdateRoom(c *fiber.Ctx) error {
+	db := database.DB
+	id, err := c.ParamsInt("id")
+	if err != nil || id < 1 {
+		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
+	}
+	json := new(models.CreateRoom)
+	err = c.BodyParser(json)
+	if err != nil {
+		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
+	}
+	room := models.Room{}
+	query := models.Room{ID: uint(id)}
+	err = db.First(&room, &query).Error
+	if err == gorm.ErrRecordNotFound {
+		return c.Status(http.StatusNotFound).SendString("Room not found")
+	}
+	room.Name = json.Name
+	room.Capacity = json.Capacity
+	room.FloorID = json.FloorID
+	err = db.Save(&room).Error
+	if err != nil {
+		return c.Status(http.StatusBadRequest).SendString("Unable to update room")
+	}
+	return c.Status(http.StatusOK).JSON(room)
+}

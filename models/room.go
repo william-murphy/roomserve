@@ -10,10 +10,6 @@ type CreateRoom struct {
 	FloorID  uint   `json:"floorId"`
 }
 
-type UpdateRoom struct {
-	CreateRoom
-}
-
 type Room struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
 	CreatedAt time.Time `json:"-"`

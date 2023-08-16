@@ -9,10 +9,6 @@ type CreateFloor struct {
 	BuildingID uint   `json:"buildingId"`
 }
 
-type UpdateFloor struct {
-	CreateFloor
-}
-
 type Floor struct {
 	ID         uint      `json:"id" gorm:"primaryKey"`
 	CreatedAt  time.Time `json:"-"`

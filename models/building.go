@@ -7,9 +7,6 @@ import (
 type CreateBuilding struct {
 	Name string `json:"name"`
 }
-type UpdateBuilding struct {
-	CreateBuilding
-}
 
 type Building struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
