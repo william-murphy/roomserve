@@ -4,18 +4,20 @@ import (
 	"time"
 )
 
-type DisplayFloor struct {
-	ID       uint            `json:"id"`
-	Name     string          `json:"name"`
-	NumRooms uint            `json:"numRoom"`
-	Building DisplayBuilding `json:"building"`
+type CreateFloor struct {
+	Name       string `json:"name"`
+	BuildingID uint   `json:"buildingId"`
+}
+
+type UpdateFloor struct {
+	CreateFloor
 }
 
 type Floor struct {
-	ID         uint `gorm:"primaryKey"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Name       string `gorm:"size:64;not null;default:concat('Floor ',currval('floors_id_seq'))"`
-	BuildingID uint
-	Rooms      []Room
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	CreatedAt  time.Time `json:"-"`
+	UpdatedAt  time.Time `json:"-"`
+	Name       string    `json:"name" gorm:"size:64;not null;default:concat('Floor ',currval('floors_id_seq'))"`
+	BuildingID uint      `json:"-"`
+	Rooms      []Room    `json:"-"`
 }

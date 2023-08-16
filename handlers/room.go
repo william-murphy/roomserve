@@ -12,7 +12,7 @@ import (
 
 func CreateRoom(c *fiber.Ctx) error {
 	db := database.DB
-	json := new(models.Room)
+	json := new(models.CreateRoom)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")

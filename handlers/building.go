@@ -12,7 +12,7 @@ import (
 
 func CreateBuilding(c *fiber.Ctx) error {
 	db := database.DB
-	json := new(models.Building)
+	json := new(models.CreateBuilding)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")

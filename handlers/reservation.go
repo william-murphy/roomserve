@@ -12,7 +12,7 @@ import (
 
 func CreateReservation(c *fiber.Ctx) error {
 	db := database.DB
-	json := new(models.Reservation)
+	json := new(models.CreateReservation)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
@@ -20,10 +20,14 @@ func CreateReservation(c *fiber.Ctx) error {
 	newReservation := models.Reservation{
 		Title:       json.Title,
 		Description: json.Description,
+		Start:       json.Start,
+		End:         json.End,
+		CreatedByID: json.CreatedByID,
+		RoomID:      json.RoomID,
 	}
 	err = db.Create(&newReservation).Error
 	if err != nil {
-		return c.Status(http.StatusBadRequest).SendString("Unable to create room")
+		return c.Status(http.StatusBadRequest).SendString("Unable to create reservation")
 	}
 	return c.Status(http.StatusCreated).JSON(newReservation)
 }
@@ -41,11 +45,40 @@ func GetReservation(c *fiber.Ctx) error {
 	if err != nil || id < 1 {
 		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
-	room := models.Reservation{}
+	reservation := models.Reservation{}
 	query := models.Reservation{ID: uint(id)}
-	err = db.First(&room, &query).Error
+	err = db.First(&reservation, &query).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
 	}
-	return c.Status(http.StatusOK).JSON(room)
+	return c.Status(http.StatusOK).JSON(reservation)
+}
+
+func UpdateReservation(c *fiber.Ctx) error {
+	db := database.DB
+	id, err := c.ParamsInt("id")
+	if err != nil || id < 1 {
+		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
+	}
+	json := new(models.UpdateReservation)
+	err = c.BodyParser(json)
+	if err != nil {
+		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
+	}
+	reservation := models.Reservation{}
+	query := models.Reservation{ID: uint(id)}
+	err = db.First(&reservation, &query).Error
+	if err == gorm.ErrRecordNotFound {
+		return c.Status(http.StatusNotFound).SendString("Reservation not found")
+	}
+	reservation.Title = json.Title
+	reservation.Description = json.Description
+	reservation.Start = json.Start
+	reservation.End = json.End
+	reservation.RoomID = json.RoomID
+	err = db.Save(&reservation).Error
+	if err != nil {
+		return c.Status(http.StatusBadRequest).SendString("Unable to update reservation")
+	}
+	return c.Status(http.StatusOK).JSON(reservation)
 }
