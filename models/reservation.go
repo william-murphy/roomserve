@@ -4,6 +4,15 @@ import (
 	"time"
 )
 
+type DisplayReservation struct {
+	ID          uint        `json:"id"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	Start       time.Time   `json:"start"`
+	End         time.Time   `json:"end"`
+	CreatedBy   DisplayUser `json:"createdBy"`
+}
+
 type Reservation struct {
 	ID          uint `gorm:"primaryKey"`
 	CreatedAt   time.Time

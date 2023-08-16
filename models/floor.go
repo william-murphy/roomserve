@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+type DisplayFloor struct {
+	ID       uint            `json:"id"`
+	Name     string          `json:"name"`
+	NumRooms uint            `json:"numRoom"`
+	Building DisplayBuilding `json:"building"`
+}
+
 type Floor struct {
 	ID         uint `gorm:"primaryKey"`
 	CreatedAt  time.Time
