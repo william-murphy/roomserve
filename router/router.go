@@ -51,7 +51,6 @@ func Initialize(router *fiber.App) {
 	reservationGroup.Get("/", handlers.GetReservations)
 	reservationGroup.Get("/:id", handlers.GetReservation)
 	reservationGroup.Put("/:id", handlers.UpdateReservation)
-	reservationGroup.Get("/:id/users", handlers.GetReservationUsers)
 
 	router.Use(func(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotFound).SendString("Not Found")

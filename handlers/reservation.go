@@ -46,8 +46,7 @@ func GetReservation(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
 	reservation := models.Reservation{}
-	query := models.Reservation{ID: uint(id)}
-	err = db.Preload("CreatedBy").Preload("Room").First(&reservation, &query).Error
+	err = db.Preload("CreatedBy").Preload("Room").First(&reservation, uint(id)).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
 	}
@@ -66,8 +65,7 @@ func UpdateReservation(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	reservation := models.Reservation{}
-	query := models.Reservation{ID: uint(id)}
-	err = db.First(&reservation, &query).Error
+	err = db.First(&reservation, uint(id)).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
 	}
@@ -81,18 +79,4 @@ func UpdateReservation(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).SendString("Unable to update reservation")
 	}
 	return c.Status(http.StatusOK).JSON(reservation)
-}
-
-func GetReservationUsers(c *fiber.Ctx) error {
-	db := database.DB
-	// id, err := c.ParamsInt("id")
-	// if err != nil || id < 1 {
-	// 	return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
-	// }
-	var users []models.User
-	err := db.Model(&models.User{}).Preload("Reservations").Find(&users).Error
-	if err != nil {
-		return c.Status(http.StatusBadRequest).SendString("Unable to get users on this reservation")
-	}
-	return c.Status(http.StatusOK).JSON(users)
 }

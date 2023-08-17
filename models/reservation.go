@@ -11,6 +11,7 @@ type CreateReservation struct {
 	End         time.Time `json:"end"`
 	CreatedByID uint      `json:"createdById"`
 	RoomID      uint      `json:"roomId"`
+	UserIDs     []uint    `json:"userIds"`
 }
 
 type UpdateReservation struct {
@@ -20,6 +21,7 @@ type UpdateReservation struct {
 	Start       time.Time `json:"start"`
 	End         time.Time `json:"end"`
 	RoomID      uint      `json:"roomId"`
+	UserIDs     []uint    `json:"userIds"`
 }
 
 type Reservation struct {
@@ -31,8 +33,8 @@ type Reservation struct {
 	Start       time.Time `json:"start" gorm:"not null"`
 	End         time.Time `json:"end" gorm:"not null"`
 	CreatedByID uint      `json:"-"`
-	CreatedBy   User      `json:"createdBy" gorm:"foreignKey:CreatedByID"`
+	CreatedBy   *User     `json:"createdBy,omitempty" gorm:"foreignKey:CreatedByID"`
 	RoomID      uint      `json:"-"`
-	Room        Room      `json:"room" gorm:"foreignKey:RoomID"`
-	Users       []*User   `json:"-" gorm:"many2many:reservation_users;"`
+	Room        *Room     `json:"room,omitempty" gorm:"foreignKey:RoomID"`
+	Users       []*User   `json:"users" gorm:"many2many:reservation_users;"`
 }

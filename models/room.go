@@ -17,4 +17,5 @@ type Room struct {
 	Name      string    `json:"name" gorm:"size:64;not null;default:concat('Room ',currval('rooms_id_seq'))"`
 	Capacity  uint      `json:"capacity" gorm:"not null;default:1;check:capacity > 0"`
 	FloorID   uint      `json:"-"`
+	Floor     *Floor    `json:"floor,omitempty"`
 }

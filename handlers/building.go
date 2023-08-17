@@ -41,8 +41,7 @@ func GetBuilding(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
 	building := models.Building{}
-	query := models.Building{ID: uint(id)}
-	err = db.First(&building, &query).Error
+	err = db.First(&building, uint(id)).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Building not found")
 	}
@@ -61,8 +60,7 @@ func UpdateBuilding(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	building := models.Building{}
-	query := models.Building{ID: uint(id)}
-	err = db.First(&building, &query).Error
+	err = db.First(&building, uint(id)).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Building not found")
 	}

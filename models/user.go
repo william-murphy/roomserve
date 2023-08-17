@@ -26,8 +26,8 @@ type User struct {
 	CreatedAt    time.Time      `json:"-"`
 	UpdatedAt    time.Time      `json:"-"`
 	Name         string         `json:"name" gorm:"size:128;not null"`
-	Username     string         `json:"username" gorm:"size:64;not null"`
-	Email        string         `json:"email" gorm:"size:256;not null"`
+	Username     string         `json:"username" gorm:"size:64;not null;unique"`
+	Email        string         `json:"email" gorm:"size:256;not null;unique"`
 	Password     []byte         `json:"-" gorm:"not null"`
 	Reservations []*Reservation `json:"-" gorm:"many2many:reservation_users;"`
 }

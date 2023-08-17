@@ -42,8 +42,7 @@ func GetFloor(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
 	floor := models.Floor{}
-	query := models.Floor{ID: uint(id)}
-	err = db.First(&floor, &query).Error
+	err = db.Preload("Building").First(&floor, uint(id)).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Floor not found")
 	}
@@ -62,8 +61,7 @@ func UpdateFloor(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	floor := models.Floor{}
-	query := models.Floor{ID: uint(id)}
-	err = db.First(&floor, &query).Error
+	err = db.First(&floor, uint(id)).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Floor not found")
 	}
