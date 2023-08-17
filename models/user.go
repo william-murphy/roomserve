@@ -22,11 +22,12 @@ type UpdateUser struct {
 }
 
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	CreatedAt time.Time `json:"-"`
-	UpdatedAt time.Time `json:"-"`
-	Name      string    `json:"name" gorm:"size:128;not null"`
-	Username  string    `json:"username" gorm:"size:64;not null"`
-	Email     string    `json:"email" gorm:"size:256;not null"`
-	Password  []byte    `json:"-" gorm:"not null"`
+	ID           uint           `json:"id" gorm:"primaryKey"`
+	CreatedAt    time.Time      `json:"-"`
+	UpdatedAt    time.Time      `json:"-"`
+	Name         string         `json:"name" gorm:"size:128;not null"`
+	Username     string         `json:"username" gorm:"size:64;not null"`
+	Email        string         `json:"email" gorm:"size:256;not null"`
+	Password     []byte         `json:"-" gorm:"not null"`
+	Reservations []*Reservation `json:"-" gorm:"many2many:reservation_users;"`
 }

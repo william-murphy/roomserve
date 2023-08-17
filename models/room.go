@@ -15,6 +15,6 @@ type Room struct {
 	CreatedAt time.Time `json:"-"`
 	UpdatedAt time.Time `json:"-"`
 	Name      string    `json:"name" gorm:"size:64;not null;default:concat('Room ',currval('rooms_id_seq'))"`
-	Capacity  uint      `json:"capacity" gorm:"not null;check:capacity > 0"`
+	Capacity  uint      `json:"capacity" gorm:"not null;default:1;check:capacity > 0"`
 	FloorID   uint      `json:"-"`
 }

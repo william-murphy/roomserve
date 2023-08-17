@@ -9,8 +9,8 @@ type CreateReservation struct {
 	Description string    `json:"description"`
 	Start       time.Time `json:"start"`
 	End         time.Time `json:"end"`
-	CreatedByID uint      `json:"createdBy"`
-	RoomID      uint      `json:"room"`
+	CreatedByID uint      `json:"createdById"`
+	RoomID      uint      `json:"roomId"`
 }
 
 type UpdateReservation struct {
@@ -19,7 +19,7 @@ type UpdateReservation struct {
 	Description string    `json:"description"`
 	Start       time.Time `json:"start"`
 	End         time.Time `json:"end"`
-	RoomID      uint      `json:"room"`
+	RoomID      uint      `json:"roomId"`
 }
 
 type Reservation struct {
@@ -31,7 +31,8 @@ type Reservation struct {
 	Start       time.Time `json:"start" gorm:"not null"`
 	End         time.Time `json:"end" gorm:"not null"`
 	CreatedByID uint      `json:"-"`
-	CreatedBy   User      `json:"createdBy"`
+	CreatedBy   User      `json:"createdBy" gorm:"foreignKey:CreatedByID"`
 	RoomID      uint      `json:"-"`
-	Room        Room      `json:"room"`
+	Room        Room      `json:"room" gorm:"foreignKey:RoomID"`
+	Users       []*User   `json:"-" gorm:"many2many:reservation_users;"`
 }
