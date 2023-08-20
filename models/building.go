@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type CreateBuilding struct {
+type NewBuilding struct {
 	Name string `json:"name"`
 }
 

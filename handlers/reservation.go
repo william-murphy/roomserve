@@ -7,12 +7,15 @@ import (
 	"roomserve/models"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
 func CreateReservation(c *fiber.Ctx) error {
+	token := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	userId := uint(token["id"].(float64))
 	db := database.DB
-	json := new(models.CreateReservation)
+	json := new(models.NewReservation)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
@@ -22,7 +25,7 @@ func CreateReservation(c *fiber.Ctx) error {
 		Description: json.Description,
 		Start:       json.Start,
 		End:         json.End,
-		CreatedByID: json.CreatedByID,
+		CreatedByID: userId,
 		RoomID:      json.RoomID,
 	}
 	err = db.Create(&newReservation).Error
@@ -59,7 +62,7 @@ func UpdateReservation(c *fiber.Ctx) error {
 	if err != nil || id < 1 {
 		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
-	json := new(models.UpdateReservation)
+	json := new(models.NewReservation)
 	err = c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")

@@ -12,7 +12,7 @@ import (
 
 func CreateRoom(c *fiber.Ctx) error {
 	db := database.DB
-	json := new(models.CreateRoom)
+	json := new(models.NewRoom)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
@@ -56,7 +56,7 @@ func UpdateRoom(c *fiber.Ctx) error {
 	if err != nil || id < 1 {
 		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
 	}
-	json := new(models.CreateRoom)
+	json := new(models.NewRoom)
 	err = c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")

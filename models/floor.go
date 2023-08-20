@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type CreateFloor struct {
+type NewFloor struct {
 	Name       string `json:"name"`
 	BuildingID uint   `json:"buildingId"`
 }

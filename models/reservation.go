@@ -4,18 +4,7 @@ import (
 	"time"
 )
 
-type CreateReservation struct {
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Start       time.Time `json:"start"`
-	End         time.Time `json:"end"`
-	CreatedByID uint      `json:"createdById"`
-	RoomID      uint      `json:"roomId"`
-	UserIDs     []uint    `json:"userIds"`
-}
-
-type UpdateReservation struct {
-	ID          uint      `json:"id"`
+type NewReservation struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Start       time.Time `json:"start"`

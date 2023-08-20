@@ -5,19 +5,13 @@ import (
 	"roomserve/config"
 	"roomserve/database"
 	"roomserve/models"
+	"roomserve/utils"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
-
-// CheckPasswordHash compare password with hash
-func CheckPasswordHash(password string, hash []byte) bool {
-	err := bcrypt.CompareHashAndPassword(hash, []byte(password))
-	return err == nil
-}
 
 func Login(c *fiber.Ctx) error {
 	// parse json
@@ -37,17 +31,16 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	// check password against database
-	if !CheckPasswordHash(json.Password, user.Password) {
+	if !utils.CheckPasswordHash(json.Password, user.Password) {
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
 
 	// create jwt token
-	token := jwt.New(jwt.SigningMethodHS256)
-
-	claims := token.Claims.(jwt.MapClaims)
-	claims["username"] = user.Username
-	claims["user_id"] = user.ID
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	claims := jwt.MapClaims{
+		"id":  user.ID,
+		"exp": time.Now().Add(time.Hour * 72).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	t, err := token.SignedString([]byte(config.Config("SECRET")))
 	if err != nil {
