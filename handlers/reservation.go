@@ -5,6 +5,7 @@ import (
 
 	"roomserve/database"
 	"roomserve/models"
+	"roomserve/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -12,8 +13,7 @@ import (
 )
 
 func CreateReservation(c *fiber.Ctx) error {
-	token := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
-	userId := uint(token["id"].(float64))
+	userId := utils.GetUserIdFromToken(c.Locals("user").(*jwt.Token))
 	db := database.DB
 	json := new(models.NewReservation)
 	err := c.BodyParser(json)
@@ -27,6 +27,17 @@ func CreateReservation(c *fiber.Ctx) error {
 		End:         json.End,
 		CreatedByID: userId,
 		RoomID:      json.RoomID,
+		Users:       []*models.User{},
+	}
+	var user models.User
+	for i := 0; i < len(json.UserIDs); i++ {
+		if json.UserIDs[i] > 0 {
+			err = db.First(&user, json.UserIDs[i]).Error
+			if err != nil {
+				return c.Status(http.StatusNotAcceptable).SendString("Invalid user provided")
+			}
+			db.Model(&newReservation).Association("Users").Append(&user)
+		}
 	}
 	err = db.Create(&newReservation).Error
 	if err != nil {
