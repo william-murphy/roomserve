@@ -21,32 +21,32 @@ func Initialize(router *fiber.App) {
 	authGroup.Post("/login", handlers.Login)
 
 	// user
-	userGroup := router.Group("/users")
+	userGroup := router.Group("/user")
 	userGroup.Post("/", handlers.CreateUser)
 
 	// building
-	buildingGroup := router.Group("/buildings")
+	buildingGroup := router.Group("/building")
 	buildingGroup.Post("/", handlers.CreateBuilding)
 	buildingGroup.Get("/", handlers.GetBuildings)
 	buildingGroup.Get("/:id", handlers.GetBuilding)
 	buildingGroup.Put("/:id", handlers.UpdateBuilding)
 
 	// floor
-	floorGroup := router.Group("/floors")
+	floorGroup := router.Group("/floor")
 	floorGroup.Post("/", handlers.CreateFloor)
 	floorGroup.Get("/", handlers.GetFloors)
 	floorGroup.Get("/:id", handlers.GetFloor)
 	floorGroup.Put("/:id", handlers.UpdateFloor)
 
 	// room
-	roomGroup := router.Group("/rooms")
+	roomGroup := router.Group("/room")
 	roomGroup.Post("/", handlers.CreateRoom)
 	roomGroup.Get("/", handlers.GetRooms)
 	roomGroup.Get("/:id", handlers.GetRoom)
 	roomGroup.Put("/:id", handlers.UpdateRoom)
 
 	// reservation
-	reservationGroup := router.Group("/reservations")
+	reservationGroup := router.Group("/reservation")
 	reservationGroup.Post("/", middleware.Protected(), handlers.CreateReservation)
 	reservationGroup.Get("/", handlers.GetReservations)
 	reservationGroup.Get("/:id", handlers.GetReservation)
