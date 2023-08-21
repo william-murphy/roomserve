@@ -29,14 +29,15 @@ func CreateReservation(c *fiber.Ctx) error {
 		RoomID:      json.RoomID,
 		Users:       []*models.User{},
 	}
-	var user models.User
+	userPtr := new(models.User)
 	for i := 0; i < len(json.UserIDs); i++ {
 		if json.UserIDs[i] > 0 {
-			err = db.First(&user, json.UserIDs[i]).Error
+			err = db.First(userPtr, json.UserIDs[i]).Error
 			if err != nil {
 				return c.Status(http.StatusNotAcceptable).SendString("Invalid user provided")
 			}
-			db.Model(&newReservation).Association("Users").Append(&user)
+			db.Model(&newReservation).Association("Users").Append(userPtr)
+			userPtr = new(models.User)
 		}
 	}
 	err = db.Create(&newReservation).Error

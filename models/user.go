@@ -29,5 +29,5 @@ type User struct {
 	Username     string         `json:"username" gorm:"size:64;not null;unique"`
 	Email        string         `json:"email" gorm:"size:256;not null;unique"`
 	Password     []byte         `json:"-" gorm:"not null"`
-	Reservations []*Reservation `json:"-" gorm:"many2many:reservation_users;"`
+	Reservations []*Reservation `json:"-" gorm:"many2many:reservation_users;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

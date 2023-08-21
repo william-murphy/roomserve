@@ -25,5 +25,5 @@ type Reservation struct {
 	CreatedBy   *User     `json:"createdBy,omitempty" gorm:"foreignKey:CreatedByID"`
 	RoomID      uint      `json:"-"`
 	Room        *Room     `json:"room,omitempty" gorm:"foreignKey:RoomID"`
-	Users       []*User   `json:"users" gorm:"many2many:reservation_users;"`
+	Users       []*User   `json:"users" gorm:"many2many:reservation_users;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

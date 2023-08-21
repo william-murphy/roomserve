@@ -16,5 +16,5 @@ type Floor struct {
 	Name       string    `json:"name" gorm:"size:64;not null;default:concat('Floor ',currval('floors_id_seq'))"`
 	BuildingID uint      `json:"-"`
 	Building   *Building `json:"building,omitempty"`
-	Rooms      []Room    `json:"-"`
+	Rooms      []Room    `json:"-" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
