@@ -25,6 +25,7 @@ type User struct {
 	ID           uint           `json:"id" gorm:"primaryKey"`
 	CreatedAt    time.Time      `json:"-"`
 	UpdatedAt    time.Time      `json:"-"`
+	IsAdmin      bool           `json:"-" gorm:"default:false"`
 	Name         string         `json:"name" gorm:"size:128;not null"`
 	Username     string         `json:"username" gorm:"size:64;not null;unique"`
 	Email        string         `json:"email" gorm:"size:256;not null;unique"`

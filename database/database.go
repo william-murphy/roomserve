@@ -26,4 +26,9 @@ func Connect() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = Seed()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
