@@ -5,6 +5,7 @@ import (
 
 	"roomserve/database"
 	"roomserve/models"
+	"roomserve/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -37,12 +38,12 @@ func GetFloors(c *fiber.Ctx) error {
 
 func GetFloor(c *fiber.Ctx) error {
 	db := database.DB
-	id, err := c.ParamsInt("id")
-	if err != nil || id < 1 {
-		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
+	id, err := utils.GetIdFromCtx(c)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
 	floor := models.Floor{}
-	err = db.Preload("Building").First(&floor, uint(id)).Error
+	err = db.Preload("Building").First(&floor, id).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Floor not found")
 	}
@@ -51,9 +52,9 @@ func GetFloor(c *fiber.Ctx) error {
 
 func UpdateFloor(c *fiber.Ctx) error {
 	db := database.DB
-	id, err := c.ParamsInt("id")
-	if err != nil || id < 1 {
-		return c.Status(http.StatusBadRequest).SendString("Invalid ID parameter")
+	id, err := utils.GetIdFromCtx(c)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
 	json := new(models.NewFloor)
 	err = c.BodyParser(json)
@@ -61,7 +62,7 @@ func UpdateFloor(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	floor := models.Floor{}
-	err = db.First(&floor, uint(id)).Error
+	err = db.First(&floor, id).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Floor not found")
 	}
