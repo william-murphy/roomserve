@@ -8,13 +8,12 @@ import (
 	"roomserve/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
 func CreateReservation(c *fiber.Ctx) error {
-	userId := utils.GetUserIdFromToken(c.Locals("user").(*jwt.Token))
 	db := database.DB
+	userId := utils.GetUserIdFromCtx(c)
 	json := new(models.NewReservation)
 	err := c.BodyParser(json)
 	if err != nil {
@@ -27,22 +26,18 @@ func CreateReservation(c *fiber.Ctx) error {
 		End:         json.End,
 		CreatedByID: userId,
 		RoomID:      json.RoomID,
-		Users:       []*models.User{},
 	}
-	userPtr := new(models.User)
-	for i := 0; i < len(json.UserIDs); i++ {
-		if json.UserIDs[i] > 0 {
-			err = db.First(userPtr, json.UserIDs[i]).Error
-			if err != nil {
-				return c.Status(http.StatusNotAcceptable).SendString("Invalid user provided")
-			}
-			db.Model(&newReservation).Association("Users").Append(userPtr)
-			userPtr = new(models.User)
-		}
+	var users []models.User
+	if len(json.UserIDs) > 0 {
+		db.Find(&users, json.UserIDs)
 	}
 	err = db.Create(&newReservation).Error
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to create reservation")
+	}
+	err = db.Model(&newReservation).Association("Users").Replace(users)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).SendString("Invalid users provided")
 	}
 	return c.Status(http.StatusCreated).JSON(newReservation)
 }
@@ -83,6 +78,10 @@ func UpdateReservation(c *fiber.Ctx) error {
 	err = db.First(&reservation, uint(id)).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
+	}
+	userId := utils.GetUserIdFromCtx(c)
+	if reservation.CreatedByID != userId {
+		return c.Status(http.StatusUnauthorized).SendString("Not allowed to update this reservation")
 	}
 	var users []models.User
 	if len(json.UserIDs) > 0 {
