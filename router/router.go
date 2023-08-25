@@ -10,9 +10,7 @@ import (
 )
 
 func Initialize(router *fiber.App) {
-	router.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(http.StatusOK).SendString("Hello, World!")
-	})
+	router.Static("/", "./static/public")
 
 	router.Use(middleware.Json)
 
@@ -20,30 +18,40 @@ func Initialize(router *fiber.App) {
 	authGroup := router.Group("/auth")
 	authGroup.Post("/login", handlers.Login)
 
+	// admin
+	adminGroup := router.Group("/admin", middleware.Protected(), middleware.Admin)
+	adminGroup.Static("/", "./static/admin")
+
 	// user
 	userGroup := router.Group("/user")
 	userGroup.Post("/", handlers.CreateUser)
 
 	// building
+	buildingAdminGroup := adminGroup.Group("/building")
+	buildingAdminGroup.Post("/", handlers.CreateBuilding)
+	buildingAdminGroup.Put("/:id", handlers.UpdateBuilding)
+
 	buildingGroup := router.Group("/building")
-	buildingGroup.Post("/", handlers.CreateBuilding)
 	buildingGroup.Get("/", handlers.GetBuildings)
 	buildingGroup.Get("/:id", handlers.GetBuilding)
-	buildingGroup.Put("/:id", handlers.UpdateBuilding)
 
 	// floor
+	floorAdminGroup := adminGroup.Group("/floor")
+	floorAdminGroup.Post("/", handlers.CreateFloor)
+	floorAdminGroup.Put("/:id", handlers.UpdateFloor)
+
 	floorGroup := router.Group("/floor")
-	floorGroup.Post("/", handlers.CreateFloor)
 	floorGroup.Get("/", handlers.GetFloors)
 	floorGroup.Get("/:id", handlers.GetFloor)
-	floorGroup.Put("/:id", handlers.UpdateFloor)
 
 	// room
+	roomAdminGroup := adminGroup.Group("/room")
+	roomAdminGroup.Post("/", handlers.CreateRoom)
+	roomAdminGroup.Put("/:id", handlers.UpdateRoom)
+
 	roomGroup := router.Group("/room")
-	roomGroup.Post("/", handlers.CreateRoom)
 	roomGroup.Get("/", handlers.GetRooms)
 	roomGroup.Get("/:id", handlers.GetRoom)
-	roomGroup.Put("/:id", handlers.UpdateRoom)
 
 	// reservation
 	reservationGroup := router.Group("/reservation")
