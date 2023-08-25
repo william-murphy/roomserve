@@ -12,6 +12,7 @@ import (
 
 func main() {
 	app := fiber.New()
+	config.Initialize()
 	database.Connect()
 	router.Initialize(app)
 	log.Fatal(app.Listen(":" + config.Config("PORT")))
