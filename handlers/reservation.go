@@ -75,7 +75,7 @@ func UpdateReservation(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
 	reservation := models.Reservation{}
-	err = db.First(&reservation, uint(id)).Error
+	err = db.First(&reservation, id).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
 	}
