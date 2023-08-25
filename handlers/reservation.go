@@ -65,10 +65,13 @@ func GetReservations(c *fiber.Ctx) error {
 
 func GetReservation(c *fiber.Ctx) error {
 	db := database.DB
+	// validate id param
 	id, err := utils.GetIdFromCtx(c)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
+
+	// find reservation with given id in database
 	reservation := models.Reservation{}
 	err = db.Preload("CreatedBy").Preload("Room").Preload("Users").First(&reservation, id).Error
 	if err == gorm.ErrRecordNotFound {

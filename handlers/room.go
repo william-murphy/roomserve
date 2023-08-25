@@ -13,11 +13,14 @@ import (
 
 func CreateRoom(c *fiber.Ctx) error {
 	db := database.DB
+	// parse json request body
 	json := new(models.NewRoom)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
+
+	// create room
 	newRoom := models.Room{
 		Name:     json.Name,
 		Capacity: json.Capacity,
@@ -39,10 +42,13 @@ func GetRooms(c *fiber.Ctx) error {
 
 func GetRoom(c *fiber.Ctx) error {
 	db := database.DB
+	// validate id param
 	id, err := utils.GetIdFromCtx(c)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
+
+	// find room in database with given id
 	room := models.Room{}
 	err = db.Preload("Floor").First(&room, id).Error
 	if err == gorm.ErrRecordNotFound {
@@ -53,20 +59,27 @@ func GetRoom(c *fiber.Ctx) error {
 
 func UpdateRoom(c *fiber.Ctx) error {
 	db := database.DB
+	// validate id param
 	id, err := utils.GetIdFromCtx(c)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
+
+	// parse json request body
 	json := new(models.NewRoom)
 	err = c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
+
+	// find room with given id in database
 	room := models.Room{}
 	err = db.First(&room, id).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Room not found")
 	}
+
+	// update fields and save
 	room.Name = json.Name
 	room.Capacity = json.Capacity
 	room.FloorID = json.FloorID

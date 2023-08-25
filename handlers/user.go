@@ -12,15 +12,20 @@ import (
 
 func CreateUser(c *fiber.Ctx) error {
 	db := database.DB
+	// parse json request body
 	json := new(models.RegisterUser)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
+
+	// create a hash of the given password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(json.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to register user")
 	}
+
+	// create user (with hashed password)
 	newRoom := models.User{
 		Name:     json.Name,
 		Username: json.Username,

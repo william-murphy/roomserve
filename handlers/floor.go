@@ -13,11 +13,14 @@ import (
 
 func CreateFloor(c *fiber.Ctx) error {
 	db := database.DB
+	// parse json request body
 	json := new(models.NewFloor)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
+
+	// create new floor
 	newFloor := models.Floor{
 		Name:       json.Name,
 		BuildingID: json.BuildingID,
@@ -38,10 +41,13 @@ func GetFloors(c *fiber.Ctx) error {
 
 func GetFloor(c *fiber.Ctx) error {
 	db := database.DB
+	// validate id param
 	id, err := utils.GetIdFromCtx(c)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
+
+	// find floor with given id in database
 	floor := models.Floor{}
 	err = db.Preload("Building").First(&floor, id).Error
 	if err == gorm.ErrRecordNotFound {
@@ -52,20 +58,27 @@ func GetFloor(c *fiber.Ctx) error {
 
 func UpdateFloor(c *fiber.Ctx) error {
 	db := database.DB
+	// validate id param
 	id, err := utils.GetIdFromCtx(c)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
+
+	// parse json request body
 	json := new(models.NewFloor)
 	err = c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
+
+	// find floor in database
 	floor := models.Floor{}
 	err = db.First(&floor, id).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Floor not found")
 	}
+
+	// update fields
 	floor.Name = json.Name
 	floor.BuildingID = json.BuildingID
 	err = db.Save(&floor).Error
