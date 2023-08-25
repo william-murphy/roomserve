@@ -13,12 +13,23 @@ import (
 
 func CreateReservation(c *fiber.Ctx) error {
 	db := database.DB
-	userId := utils.GetUserIdFromCtx(c)
+	// get json from request body
 	json := new(models.NewReservation)
 	err := c.BodyParser(json)
 	if err != nil {
 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
 	}
+
+	// validate given start and end times
+	if json.End.Before(json.Start) {
+		return c.Status(http.StatusBadRequest).SendString("Start time must be before end")
+	}
+	if utils.CheckOverlappingTime(json.Start, json.End, json.RoomID) {
+		return c.Status(http.StatusBadRequest).SendString("Reservation times overlap with existing reservation")
+	}
+
+	// create reservation
+	userId := utils.GetUserIdFromCtx(c)
 	newReservation := models.Reservation{
 		Title:       json.Title,
 		Description: json.Description,
@@ -27,18 +38,21 @@ func CreateReservation(c *fiber.Ctx) error {
 		CreatedByID: userId,
 		RoomID:      json.RoomID,
 	}
-	var users []models.User
-	if len(json.UserIDs) > 0 {
-		db.Find(&users, json.UserIDs)
-	}
 	err = db.Create(&newReservation).Error
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to create reservation")
+	}
+
+	// handle users
+	var users []models.User
+	if len(json.UserIDs) > 0 {
+		db.Find(&users, json.UserIDs)
 	}
 	err = db.Model(&newReservation).Association("Users").Replace(users)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid users provided")
 	}
+
 	return c.Status(http.StatusCreated).JSON(newReservation)
 }
 
@@ -65,24 +79,41 @@ func GetReservation(c *fiber.Ctx) error {
 
 func UpdateReservation(c *fiber.Ctx) error {
 	db := database.DB
+	// retrieve and validate reservation id
 	id, err := utils.GetIdFromCtx(c)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
 	}
-	json := new(models.NewReservation)
-	err = c.BodyParser(json)
-	if err != nil {
-		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
-	}
+
+	// get reservation from database with given id
 	reservation := models.Reservation{}
 	err = db.First(&reservation, id).Error
 	if err == gorm.ErrRecordNotFound {
 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
 	}
+
+	// get json from request body
+	json := new(models.NewReservation)
+	err = c.BodyParser(json)
+	if err != nil {
+		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
+	}
+
+	// check if user id from middleware matches reservation's created by field
 	userId := utils.GetUserIdFromCtx(c)
 	if reservation.CreatedByID != userId {
 		return c.Status(http.StatusUnauthorized).SendString("Not allowed to update this reservation")
 	}
+
+	// validate given start and end times
+	if json.End.Before(json.Start) {
+		return c.Status(http.StatusBadRequest).SendString("Start time must be before end")
+	}
+	if utils.CheckOverlappingTime(json.Start, json.End, json.RoomID) {
+		return c.Status(http.StatusBadRequest).SendString("Reservation times overlap with existing reservation")
+	}
+
+	// replace users with given users
 	var users []models.User
 	if len(json.UserIDs) > 0 {
 		db.Find(&users, json.UserIDs)
@@ -91,6 +122,8 @@ func UpdateReservation(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Invalid users provided")
 	}
+
+	// update fields and save
 	reservation.Title = json.Title
 	reservation.Description = json.Description
 	reservation.Start = json.Start
@@ -100,5 +133,6 @@ func UpdateReservation(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to update reservation")
 	}
+
 	return c.Status(http.StatusOK).JSON(reservation)
 }
