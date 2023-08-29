@@ -23,6 +23,7 @@ func CreateRoom(c *fiber.Ctx) error {
 	// create room
 	newRoom := models.Room{
 		Name:     json.Name,
+		Number:   json.Number,
 		Capacity: json.Capacity,
 		FloorID:  json.FloorID,
 	}
@@ -81,6 +82,7 @@ func UpdateRoom(c *fiber.Ctx) error {
 
 	// update fields and save
 	room.Name = json.Name
+	room.Number = json.Number
 	room.Capacity = json.Capacity
 	room.FloorID = json.FloorID
 	err = db.Save(&room).Error

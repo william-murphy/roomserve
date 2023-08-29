@@ -23,6 +23,7 @@ func CreateFloor(c *fiber.Ctx) error {
 	// create new floor
 	newFloor := models.Floor{
 		Name:       json.Name,
+		Level:      json.Level,
 		BuildingID: json.BuildingID,
 	}
 	err = db.Create(&newFloor).Error
@@ -80,6 +81,7 @@ func UpdateFloor(c *fiber.Ctx) error {
 
 	// update fields
 	floor.Name = json.Name
+	floor.Level = json.Level
 	floor.BuildingID = json.BuildingID
 	err = db.Save(&floor).Error
 	if err != nil {

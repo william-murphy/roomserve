@@ -22,7 +22,8 @@ func CreateBuilding(c *fiber.Ctx) error {
 
 	// create building
 	newBuilding := models.Building{
-		Name: json.Name,
+		Name:    json.Name,
+		Address: json.Address,
 	}
 	err = db.Create(&newBuilding).Error
 	if err != nil {
@@ -79,6 +80,7 @@ func UpdateBuilding(c *fiber.Ctx) error {
 
 	// update fields and save
 	building.Name = json.Name
+	building.Address = json.Address
 	err = db.Save(&building).Error
 	if err != nil {
 		return c.Status(http.StatusBadRequest).SendString("Unable to update building")
