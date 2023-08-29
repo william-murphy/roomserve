@@ -25,6 +25,7 @@ func Initialize(router *fiber.App) {
 	// user
 	userGroup := router.Group("/user")
 	userGroup.Post("/", handlers.CreateUser)
+	userGroup.Get("/reservation", middleware.Protected(), handlers.GetUserReservations)
 
 	// building
 	buildingAdminGroup := adminGroup.Group("/building")
