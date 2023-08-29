@@ -2,7 +2,9 @@ package utils
 
 import (
 	"errors"
+	"regexp"
 	"roomserve/database"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,4 +37,11 @@ func CheckOverlappingTime(start time.Time, end time.Time, roomId uint) bool {
 	var Found bool
 	db.Raw("SELECT EXISTS(SELECT 1 FROM reservations WHERE reservations.start <= ? AND reservations.end >= ? AND reservations.room_id = ?) AS found", end, start, roomId).Scan(&Found)
 	return Found
+}
+
+func ConvertSearchQuery(query string) string {
+	re := regexp.MustCompile("[^A-Za-z0-9]+")
+	splitQuery := re.Split(query, -1)
+	result := strings.Join(splitQuery, " | ")
+	return result
 }
