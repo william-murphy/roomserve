@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"roomserve/config"
 	"roomserve/database"
@@ -8,31 +9,32 @@ import (
 	"roomserve/utils"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 )
 
-func Login(c *fiber.Ctx) error {
-	// parse json
+func LoginUser(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
-	json := new(models.LoginUser)
-	err := c.BodyParser(json)
+	// parse json
+	reqBody := new(models.LoginUser)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
 	if err != nil {
-		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
 	}
 
 	// find user by email
 	user := models.User{}
-	query := models.User{Email: json.Email}
-	err = db.First(&user, &query).Error
+	err = db.Raw("SELECT * FROM users WHERE email = ?", reqBody.Email).Scan(&user).Error
 	if err == gorm.ErrRecordNotFound {
-		return c.Status(http.StatusBadRequest).SendString("Email not found")
+		http.Error(res, "Email not found", http.StatusBadRequest)
+		return
 	}
 
 	// check password against database
-	if !utils.CheckPasswordHash(json.Password, user.Password) {
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+	if !utils.CheckPasswordHash(reqBody.Password, user.Password) {
+		http.Error(res, "Wrong credentials", http.StatusBadRequest)
+		return
 	}
 
 	// create jwt token
@@ -40,11 +42,11 @@ func Login(c *fiber.Ctx) error {
 		"id":  user.ID,
 		"exp": time.Now().Add(time.Hour * 72).Unix(),
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(config.Config("SECRET")))
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(config.Config("SECRET")))
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
-	return c.Status(http.StatusCreated).JSON(fiber.Map{"token": t})
+	utils.RespondWithJson(res, 200, map[string]string{"token": token})
 }

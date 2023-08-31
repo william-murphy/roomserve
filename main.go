@@ -2,18 +2,19 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"roomserve/config"
 	"roomserve/database"
 	"roomserve/router"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	app := fiber.New()
 	config.Initialize()
 	database.Connect()
-	router.Initialize(app)
-	log.Fatal(app.Listen(":" + config.Config("PORT")))
+	r := chi.NewRouter()
+	router.Initialize(r)
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

@@ -1,49 +1,58 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"roomserve/database"
 	"roomserve/models"
 	"roomserve/utils"
 
-	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateUser(c *fiber.Ctx) error {
+func RegisterUser(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
-	// parse json request body
-	json := new(models.RegisterUser)
-	err := c.BodyParser(json)
+	// parse json
+	reqBody := new(models.RegisterUser)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
 	if err != nil {
-		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
 	}
 
 	// create a hash of the given password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(json.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(reqBody.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).SendString("Unable to register user")
+		http.Error(res, "Unable to register user", http.StatusNotAcceptable)
+		return
 	}
 
 	// create user (with hashed password)
-	newRoom := models.User{
-		Name:     json.Name,
-		Username: json.Username,
-		Email:    json.Email,
+	newUser := models.User{
+		Name:     reqBody.Name,
+		Username: reqBody.Username,
+		Email:    reqBody.Email,
 		Password: hashedPassword,
 	}
-	err = db.Create(&newRoom).Error
+	err = db.Create(&newUser).Error
 	if err != nil {
-		return c.Status(http.StatusBadRequest).SendString("Unable to register user")
+		http.Error(res, "Unable to register user", http.StatusNotAcceptable)
+		return
 	}
-	return c.Status(http.StatusCreated).JSON(newRoom)
+
+	utils.RespondWithJson(res, 201, newUser)
 }
 
-func GetUserReservations(c *fiber.Ctx) error {
+func GetUserReservations(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
-	// get reservations based on the user id passed via auth
-	userId := utils.GetUserIdFromCtx(c)
+	// get user from context
+	ctx := req.Context()
+	user, ok := ctx.Value("user").(*models.User)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
 
 	// get reservations that include this user
 	Reservations := []models.Reservation{}
@@ -54,6 +63,7 @@ func GetUserReservations(c *fiber.Ctx) error {
 		"FROM reservations LEFT JOIN rooms ON reservations.room_id = rooms.id "+
 		"LEFT JOIN floors ON rooms.floor_id = floors.id "+
 		"LEFT JOIN buildings ON floors.building_id = buildings.id "+
-		"WHERE reservations.id IN (SELECT reservation_id FROM reservation_users WHERE user_id = ?)", userId).Scan(&Reservations)
-	return c.Status(http.StatusOK).JSON(Reservations)
+		"WHERE reservations.id IN (SELECT reservation_id FROM reservation_users WHERE user_id = ?)", user.ID).Scan(&Reservations)
+
+	utils.RespondWithJson(res, 200, Reservations)
 }

@@ -1,16 +1,26 @@
 package utils
 
 import (
-	"errors"
+	"encoding/json"
+	"net/http"
 	"regexp"
 	"roomserve/database"
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func RespondWithJson(res http.ResponseWriter, code int, payload interface{}) {
+	response, err := json.Marshal(payload)
+	if err != nil {
+		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(code)
+	res.Write(response)
+}
 
 // CheckPasswordHash compares password with hash
 func CheckPasswordHash(password string, hash []byte) bool {
@@ -18,19 +28,19 @@ func CheckPasswordHash(password string, hash []byte) bool {
 	return err == nil
 }
 
-// Gets user id from jwt token in ctx locals
-func GetUserIdFromCtx(c *fiber.Ctx) uint {
-	return uint((c.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)["id"].(float64))
-}
+// // Gets user id from jwt token in ctx locals
+// func GetUserIdFromCtx(c *fiber.Ctx) uint {
+// 	return uint((c.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)["id"].(float64))
+// }
 
-// Gets id from url
-func GetIdFromCtx(c *fiber.Ctx) (uint, error) {
-	id, err := c.ParamsInt("id")
-	if err != nil || id < 1 {
-		return 0, errors.New("invalid parameter")
-	}
-	return uint(id), nil
-}
+// // Gets id from url
+// func GetIdFromCtx(c *fiber.Ctx) (uint, error) {
+// 	id, err := c.ParamsInt("id")
+// 	if err != nil || id < 1 {
+// 		return 0, errors.New("invalid parameter")
+// 	}
+// 	return uint(id), nil
+// }
 
 func CheckOverlappingTime(start time.Time, end time.Time, roomId uint) bool {
 	db := database.DB

@@ -16,11 +16,6 @@ type RegisterUser struct {
 	Password string `json:"password"`
 }
 
-type UpdateUser struct {
-	Name     string `json:"name"`
-	Username string `json:"username"`
-}
-
 type User struct {
 	ID           uint           `json:"id" gorm:"primaryKey"`
 	CreatedAt    time.Time      `json:"-"`
