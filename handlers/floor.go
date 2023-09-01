@@ -1,90 +1,116 @@
 package handlers
 
-// import (
-// 	"net/http"
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
 
-// 	"roomserve/database"
-// 	"roomserve/models"
-// 	"roomserve/utils"
+	"roomserve/database"
+	"roomserve/models"
+	"roomserve/utils"
 
-// 	"gorm.io/gorm"
-// )
+	"github.com/go-chi/chi/v5"
+)
 
-// func CreateFloor(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// parse json request body
-// 	json := new(models.NewFloor)
-// 	err := c.BodyParser(json)
-// 	if err != nil {
-// 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
-// 	}
+func FloorCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		db := database.DB
+		// validate floor id param
+		id, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 32)
+		if err != nil || id < 1 {
+			http.Error(res, "Invalid ID parameter", http.StatusBadRequest)
+			return
+		}
 
-// 	// create new floor
-// 	newFloor := models.Floor{
-// 		Name:       json.Name,
-// 		Level:      json.Level,
-// 		BuildingID: json.BuildingID,
-// 	}
-// 	err = db.Create(&newFloor).Error
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Unable to create floor")
-// 	}
-// 	return c.Status(http.StatusCreated).JSON(newFloor)
-// }
+		// get floor from database
+		var floor models.Floor
+		err = db.Raw("SELECT floors.*, "+
+			"buildings.id AS \"Building__id\", buildings.name AS \"Building__name\", buildings.address AS \"Building__address\" "+
+			"FROM floors LEFT JOIN buildings ON floors.building_id = buildings.id WHERE floors.id = ? LIMIT 1", id).Scan(&floor).Error
+		if err != nil {
+			http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
 
-// func GetFloors(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	Floors := []models.Floor{}
-// 	db.Model(&models.Floor{}).Order("ID asc").Limit(100).Find(&Floors)
-// 	return c.Status(http.StatusOK).JSON(Floors)
-// }
+		// pass floor into request context
+		ctx := context.WithValue(req.Context(), "floor", floor)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
+}
 
-// func GetFloor(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// validate id param
-// 	id, err := utils.GetIdFromCtx(c)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
-// 	}
+func CreateFloor(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// parse json
+	reqBody := new(models.NewFloor)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
+	}
 
-// 	// find floor with given id in database
-// 	floor := models.Floor{}
-// 	err = db.Preload("Building").First(&floor, id).Error
-// 	if err == gorm.ErrRecordNotFound {
-// 		return c.Status(http.StatusNotFound).SendString("Floor not found")
-// 	}
-// 	return c.Status(http.StatusOK).JSON(floor)
-// }
+	// create floor
+	newFloor := models.Floor{
+		Name:       reqBody.Name,
+		Level:      reqBody.Level,
+		BuildingID: reqBody.BuildingID,
+	}
+	err = db.Create(&newFloor).Error
+	if err != nil {
+		http.Error(res, "Unable to create floor", http.StatusBadRequest)
+		return
+	}
 
-// func UpdateFloor(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// validate id param
-// 	id, err := utils.GetIdFromCtx(c)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
-// 	}
+	utils.RespondWithJson(res, 201, newFloor)
+}
 
-// 	// parse json request body
-// 	json := new(models.NewFloor)
-// 	err = c.BodyParser(json)
-// 	if err != nil {
-// 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
-// 	}
+func GetFloors(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	Floors := []models.Floor{}
+	db.Raw("SELECT floors.*, " +
+		"buildings.id AS \"Building__id\", buildings.name AS \"Building__name\", buildings.address AS \"Building__address\" " +
+		"FROM floors LEFT JOIN buildings ON floors.building_id = buildings.id").Scan(&Floors)
+	utils.RespondWithJson(res, 200, Floors)
+}
 
-// 	// find floor in database
-// 	floor := models.Floor{}
-// 	err = db.First(&floor, id).Error
-// 	if err == gorm.ErrRecordNotFound {
-// 		return c.Status(http.StatusNotFound).SendString("Floor not found")
-// 	}
+func GetFloor(res http.ResponseWriter, req *http.Request) {
+	// get floor from context and return it as json
+	ctx := req.Context()
+	floor, ok := ctx.Value("floor").(models.Floor)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+	utils.RespondWithJson(res, 200, floor)
+}
 
-// 	// update fields
-// 	floor.Name = json.Name
-// 	floor.Level = json.Level
-// 	floor.BuildingID = json.BuildingID
-// 	err = db.Save(&floor).Error
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Unable to update floor")
-// 	}
-// 	return c.Status(http.StatusOK).JSON(floor)
-// }
+func UpdateFloor(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get floor from context
+	ctx := req.Context()
+	floor, ok := ctx.Value("floor").(models.Floor)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// parse json
+	reqBody := new(models.NewFloor)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
+	}
+
+	// update fields and save
+	floor.Name = reqBody.Name
+	floor.Level = reqBody.Level
+	floor.BuildingID = reqBody.BuildingID
+	err = db.Save(&floor).Error
+	if err != nil {
+		http.Error(res, "Could not update floor", http.StatusBadRequest)
+		return
+	}
+
+	utils.RespondWithJson(res, 200, floor)
+}

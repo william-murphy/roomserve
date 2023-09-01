@@ -42,6 +42,17 @@ func Initialize(r *chi.Mux) {
 		})
 	})
 
+	// floor
+	r.Route("/floor", func(r chi.Router) {
+		r.With(middleware.Protected, middleware.Admin).Post("/", handlers.CreateFloor)
+		r.Get("/", handlers.GetFloors)
+		r.Route("/{id}", func(r chi.Router) {
+			r.Use(handlers.FloorCtx)
+			r.Get("/", handlers.GetFloor)
+			r.With(middleware.Protected, middleware.Admin).Put("/", handlers.UpdateFloor)
+		})
+	})
+
 	/*
 		router.Static("/", "./static/public")
 
