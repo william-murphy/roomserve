@@ -12,14 +12,15 @@ func seedDefaultAdmin() error {
 	if err != nil {
 		return err
 	}
+	email := config.Config("ADMIN_EMAIL")
 	user := models.User{
 		IsAdmin:  true,
 		Name:     "Default Admin",
 		Username: "admin",
-		Email:    config.Config("ADMIN_EMAIL"),
+		Email:    email,
 		Password: hashedPassword,
 	}
-	err = DB.FirstOrCreate(&user).Error
+	err = DB.Where(models.User{Email: email}).FirstOrCreate(&user).Error
 	if err != nil {
 		return err
 	}
