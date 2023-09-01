@@ -71,7 +71,7 @@ func GetBuildings(res http.ResponseWriter, req *http.Request) {
 func GetBuilding(res http.ResponseWriter, req *http.Request) {
 	// get building from context and return it as json
 	ctx := req.Context()
-	building, ok := ctx.Value("building").(*models.Building)
+	building, ok := ctx.Value("building").(models.Building)
 	if !ok {
 		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
@@ -83,7 +83,7 @@ func UpdateBuilding(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
 	// get building from context
 	ctx := req.Context()
-	building, ok := ctx.Value("building").(*models.Building)
+	building, ok := ctx.Value("building").(models.Building)
 	if !ok {
 		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
