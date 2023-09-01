@@ -1,92 +1,122 @@
 package handlers
 
-// import (
-// 	"net/http"
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
 
-// 	"roomserve/database"
-// 	"roomserve/models"
-// 	"roomserve/utils"
+	"roomserve/database"
+	"roomserve/models"
+	"roomserve/utils"
 
-// 	"gorm.io/gorm"
-// )
+	"github.com/go-chi/chi/v5"
+)
 
-// func CreateRoom(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// parse json request body
-// 	json := new(models.NewRoom)
-// 	err := c.BodyParser(json)
-// 	if err != nil {
-// 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
-// 	}
+func RoomCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		db := database.DB
+		// validate room id param
+		id, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 32)
+		if err != nil || id < 1 {
+			http.Error(res, "Invalid ID parameter", http.StatusBadRequest)
+			return
+		}
 
-// 	// create room
-// 	newRoom := models.Room{
-// 		Name:     json.Name,
-// 		Number:   json.Number,
-// 		Capacity: json.Capacity,
-// 		FloorID:  json.FloorID,
-// 	}
-// 	err = db.Create(&newRoom).Error
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Unable to create room")
-// 	}
-// 	return c.Status(http.StatusCreated).JSON(newRoom)
-// }
+		// get room from database
+		var room models.Room
+		err = db.Raw("SELECT rooms.*, "+
+			"floors.id AS \"Floor__id\", floors.name AS \"Floor__name\", floors.level AS \"Floor__level\", "+
+			"buildings.id AS \"Floor__Building__id\", buildings.name AS \"Floor__Building__name\", buildings.address AS \"Floor__Building__address\" "+
+			"FROM rooms LEFT JOIN floors ON rooms.floor_id = floors.id "+
+			"LEFT JOIN buildings ON floors.building_id = buildings.id WHERE rooms.id = ? LIMIT 1", id).Scan(&room).Error
+		if err != nil || room.ID == 0 {
+			http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
 
-// func GetRooms(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	Rooms := []models.Room{}
-// 	db.Model(&models.Room{}).Order("ID asc").Limit(100).Find(&Rooms)
-// 	return c.Status(http.StatusOK).JSON(Rooms)
-// }
+		// pass room into request context
+		ctx := context.WithValue(req.Context(), "room", room)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
+}
 
-// func GetRoom(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// validate id param
-// 	id, err := utils.GetIdFromCtx(c)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
-// 	}
+func CreateRoom(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// parse json
+	reqBody := new(models.NewRoom)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
+	}
 
-// 	// find room in database with given id
-// 	room := models.Room{}
-// 	err = db.Preload("Floor").First(&room, id).Error
-// 	if err == gorm.ErrRecordNotFound {
-// 		return c.Status(http.StatusNotFound).SendString("Room not found")
-// 	}
-// 	return c.Status(http.StatusOK).JSON(room)
-// }
+	// create room
+	newRoom := models.Room{
+		Name:     reqBody.Name,
+		Number:   reqBody.Number,
+		Capacity: reqBody.Capacity,
+		FloorID:  reqBody.FloorID,
+	}
+	err = db.Create(&newRoom).Error
+	if err != nil {
+		http.Error(res, "Unable to create room", http.StatusBadRequest)
+		return
+	}
 
-// func UpdateRoom(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// validate id param
-// 	id, err := utils.GetIdFromCtx(c)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
-// 	}
+	utils.RespondWithJson(res, 201, newRoom)
+}
 
-// 	// parse json request body
-// 	json := new(models.NewRoom)
-// 	err = c.BodyParser(json)
-// 	if err != nil {
-// 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
-// 	}
+func GetRooms(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	Rooms := []models.Room{}
+	db.Raw("SELECT rooms.*, " +
+		"floors.id AS \"Floor__id\", floors.name AS \"Floor__name\", floors.level AS \"Floor__level\", " +
+		"buildings.id AS \"Floor__Building__id\", buildings.name AS \"Floor__Building__name\", buildings.address AS \"Floor__Building__address\" " +
+		"FROM rooms LEFT JOIN floors ON rooms.floor_id = floors.id " +
+		"LEFT JOIN buildings ON floors.building_id = buildings.id ORDER BY rooms.id ASC LIMIT 100").Scan(&Rooms)
+	utils.RespondWithJson(res, 200, Rooms)
+}
 
-// 	// find room with given id in database
-// 	room := models.Room{}
-// 	err = db.First(&room, id).Error
-// 	if err == gorm.ErrRecordNotFound {
-// 		return c.Status(http.StatusNotFound).SendString("Room not found")
-// 	}
+func GetRoom(res http.ResponseWriter, req *http.Request) {
+	// get room from context and return it as json
+	ctx := req.Context()
+	room, ok := ctx.Value("room").(models.Room)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+	utils.RespondWithJson(res, 200, room)
+}
 
-// 	// update fields and save
-// 	room.Name = json.Name
-// 	room.Number = json.Number
-// 	room.Capacity = json.Capacity
-// 	room.FloorID = json.FloorID
-// 	err = db.Save(&room).Error
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Unable to update room")
-// 	}
-// 	return c.Status(http.StatusOK).JSON(room)
-// }
+func UpdateRoom(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get room from context
+	ctx := req.Context()
+	room, ok := ctx.Value("room").(models.Room)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// parse json
+	reqBody := new(models.NewRoom)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
+	}
+
+	// update fields and save
+	room.Name = reqBody.Name
+	room.Number = reqBody.Number
+	room.Capacity = reqBody.Capacity
+	room.FloorID = reqBody.FloorID
+	err = db.Save(&room).Error
+	if err != nil {
+		http.Error(res, "Could not update room", http.StatusBadRequest)
+		return
+	}
+
+	utils.RespondWithJson(res, 200, room)
+}

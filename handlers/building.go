@@ -26,7 +26,7 @@ func BuildingCtx(next http.Handler) http.Handler {
 		// get building from database
 		var building models.Building
 		err = db.Raw("SELECT * FROM buildings WHERE id = ? LIMIT 1", id).Scan(&building).Error
-		if err != nil {
+		if err != nil || building.ID == 0 {
 			http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}

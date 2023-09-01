@@ -53,6 +53,17 @@ func Initialize(r *chi.Mux) {
 		})
 	})
 
+	// room
+	r.Route("/room", func(r chi.Router) {
+		r.With(middleware.Protected, middleware.Admin).Post("/", handlers.CreateRoom)
+		r.Get("/", handlers.GetRooms)
+		r.Route("/{id}", func(r chi.Router) {
+			r.Use(handlers.RoomCtx)
+			r.Get("/", handlers.GetRoom)
+			r.With(middleware.Protected, middleware.Admin).Put("/", handlers.UpdateRoom)
+		})
+	})
+
 	/*
 		router.Static("/", "./static/public")
 

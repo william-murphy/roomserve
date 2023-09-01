@@ -28,7 +28,7 @@ func FloorCtx(next http.Handler) http.Handler {
 		err = db.Raw("SELECT floors.*, "+
 			"buildings.id AS \"Building__id\", buildings.name AS \"Building__name\", buildings.address AS \"Building__address\" "+
 			"FROM floors LEFT JOIN buildings ON floors.building_id = buildings.id WHERE floors.id = ? LIMIT 1", id).Scan(&floor).Error
-		if err != nil {
+		if err != nil || floor.ID == 0 {
 			http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
@@ -69,7 +69,7 @@ func GetFloors(res http.ResponseWriter, req *http.Request) {
 	Floors := []models.Floor{}
 	db.Raw("SELECT floors.*, " +
 		"buildings.id AS \"Building__id\", buildings.name AS \"Building__name\", buildings.address AS \"Building__address\" " +
-		"FROM floors LEFT JOIN buildings ON floors.building_id = buildings.id").Scan(&Floors)
+		"FROM floors LEFT JOIN buildings ON floors.building_id = buildings.id ORDER BY floors.id ASC LIMIT 100").Scan(&Floors)
 	utils.RespondWithJson(res, 200, Floors)
 }
 
