@@ -1,140 +1,187 @@
 package handlers
 
-// import (
-// 	"net/http"
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
 
-// 	"roomserve/database"
-// 	"roomserve/models"
-// 	"roomserve/utils"
+	"roomserve/database"
+	"roomserve/models"
+	"roomserve/utils"
 
-// 	"gorm.io/gorm"
-// )
+	"github.com/go-chi/chi/v5"
+)
 
-// func CreateReservation(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// get json from request body
-// 	json := new(models.NewReservation)
-// 	err := c.BodyParser(json)
-// 	if err != nil {
-// 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
-// 	}
+func ReservationCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		db := database.DB
+		// validate reservation id param
+		id, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 32)
+		if err != nil || id < 1 {
+			http.Error(res, "Invalid ID parameter", http.StatusBadRequest)
+			return
+		}
 
-// 	// validate given start and end times
-// 	if json.End.Before(json.Start) {
-// 		return c.Status(http.StatusBadRequest).SendString("Start time must be before end")
-// 	}
-// 	if utils.CheckOverlappingTime(json.Start, json.End, json.RoomID) {
-// 		return c.Status(http.StatusBadRequest).SendString("Reservation times overlap with existing reservation")
-// 	}
+		// get reservation from database
+		var reservation models.Reservation
+		err = db.Raw("SELECT reservations.*, "+
+			"rooms.id AS \"Room__id\", rooms.name AS \"Room__name\", rooms.number AS \"Room__number\", rooms.capacity AS \"Room__capacity\", "+
+			"floors.id AS \"Room__Floor__id\", floors.name AS \"Room__Floor__name\", floors.level AS \"Room__Floor__level\", "+
+			"buildings.id AS \"Room__Floor__Building__id\", buildings.name AS \"Room__Floor__Building__name\", buildings.address AS \"Room__Floor__Building__address\" "+
+			"FROM reservations LEFT JOIN rooms ON reservations.room_id = rooms.id "+
+			"LEFT JOIN floors ON rooms.floor_id = floors.id "+
+			"LEFT JOIN buildings ON floors.building_id = buildings.id WHERE rooms.id = ? LIMIT 1", id).Scan(&reservation).Error
+		if err != nil || reservation.ID == 0 {
+			http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
 
-// 	// create reservation
-// 	userId := utils.GetUserIdFromCtx(c)
-// 	newReservation := models.Reservation{
-// 		Title:       json.Title,
-// 		Description: json.Description,
-// 		Start:       json.Start,
-// 		End:         json.End,
-// 		CreatedByID: userId,
-// 		RoomID:      json.RoomID,
-// 	}
-// 	err = db.Create(&newReservation).Error
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Unable to create reservation")
-// 	}
+		// pass reservation into request context
+		ctx := context.WithValue(req.Context(), "reservation", reservation)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
+}
 
-// 	// handle users
-// 	var users []models.User
-// 	if len(json.UserIDs) > 0 {
-// 		db.Find(&users, json.UserIDs)
-// 	}
-// 	err = db.Model(&newReservation).Association("Users").Replace(users)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid users provided")
-// 	}
+func CreateReservation(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// parse json
+	reqBody := new(models.NewReservation)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
+	}
 
-// 	return c.Status(http.StatusCreated).JSON(newReservation)
-// }
+	// validate given start and end times
+	if reqBody.End.Before(reqBody.Start) {
+		http.Error(res, "Start time must be before end time", http.StatusBadRequest)
+		return
+	}
+	if utils.CheckOverlappingTime(0, reqBody.Start, reqBody.End, reqBody.RoomID) {
+		http.Error(res, "Reservation time overlaps with an existing reservation for the given reservation", http.StatusBadRequest)
+		return
+	}
 
-// func GetReservations(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	Reservations := []models.Reservation{}
-// 	db.Model(&models.Reservation{}).Order("ID asc").Limit(100).Find(&Reservations)
-// 	return c.Status(http.StatusOK).JSON(Reservations)
-// }
+	// get user from ctx
+	user := req.Context().Value("user").(models.User)
 
-// func GetReservation(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// validate id param
-// 	id, err := utils.GetIdFromCtx(c)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
-// 	}
+	// create reservation
+	newReservation := models.Reservation{
+		Title:       reqBody.Title,
+		Description: reqBody.Description,
+		Start:       reqBody.Start,
+		End:         reqBody.End,
+		CreatedByID: user.ID,
+		RoomID:      reqBody.RoomID,
+	}
+	err = db.Create(&newReservation).Error
+	if err != nil {
+		http.Error(res, "Unable to create reservation", http.StatusBadRequest)
+		return
+	}
 
-// 	// find reservation with given id in database
-// 	reservation := models.Reservation{}
-// 	err = db.Preload("CreatedBy").Preload("Room").Preload("Users").First(&reservation, id).Error
-// 	if err == gorm.ErrRecordNotFound {
-// 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
-// 	}
-// 	return c.Status(http.StatusOK).JSON(reservation)
-// }
+	// handle users
+	var users []models.User
+	if len(reqBody.UserIDs) > 0 {
+		db.Find(&users, reqBody.UserIDs)
+	}
+	err = db.Model(&newReservation).Association("Users").Replace(users)
+	if err != nil {
+		http.Error(res, "Invalid users provided", http.StatusBadRequest)
+		return
+	}
 
-// func UpdateReservation(res http.ResponseWriter, req *http.Request) {
-// 	db := database.DB
-// 	// retrieve and validate reservation id
-// 	id, err := utils.GetIdFromCtx(c)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid parameter provided")
-// 	}
+	utils.RespondWithJson(res, 201, newReservation)
+}
 
-// 	// get reservation from database with given id
-// 	reservation := models.Reservation{}
-// 	err = db.First(&reservation, id).Error
-// 	if err == gorm.ErrRecordNotFound {
-// 		return c.Status(http.StatusNotFound).SendString("Reservation not found")
-// 	}
+func GetReservations(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	Reservations := []models.Reservation{}
+	db.Raw("SELECT reservations.*, " +
+		"rooms.id AS \"Room__id\", rooms.name AS \"Room__name\", rooms.number AS \"Room__number\", rooms.capacity AS \"Room__capacity\", " +
+		"floors.id AS \"Room__Floor__id\", floors.name AS \"Room__Floor__name\", floors.level AS \"Room__Floor__level\", " +
+		"buildings.id AS \"Room__Floor__Building__id\", buildings.name AS \"Room__Floor__Building__name\", buildings.address AS \"Room__Floor__Building__address\" " +
+		"FROM reservations LEFT JOIN rooms ON reservations.room_id = rooms.id " +
+		"LEFT JOIN floors ON rooms.floor_id = floors.id " +
+		"LEFT JOIN buildings ON floors.building_id = buildings.id ORDER BY reservations.id ASC LIMIT 100").Scan(&Reservations)
+	utils.RespondWithJson(res, 200, Reservations)
+}
 
-// 	// get json from request body
-// 	json := new(models.NewReservation)
-// 	err = c.BodyParser(json)
-// 	if err != nil {
-// 		return c.Status(http.StatusNotAcceptable).SendString("Invalid JSON")
-// 	}
+func GetReservation(res http.ResponseWriter, req *http.Request) {
+	// get reservation from context and return it as json
+	ctx := req.Context()
+	reservation, ok := ctx.Value("reservation").(models.Reservation)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+	utils.RespondWithJson(res, 200, reservation)
+}
 
-// 	// check if user id from middleware matches reservation's created by field
-// 	userId := utils.GetUserIdFromCtx(c)
-// 	if reservation.CreatedByID != userId {
-// 		return c.Status(http.StatusUnauthorized).SendString("Not allowed to update this reservation")
-// 	}
+func UpdateReservation(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get reservation from context
+	ctx := req.Context()
+	reservation, ok := ctx.Value("reservation").(models.Reservation)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
 
-// 	// validate given start and end times
-// 	if json.End.Before(json.Start) {
-// 		return c.Status(http.StatusBadRequest).SendString("Start time must be before end")
-// 	}
-// 	if utils.CheckOverlappingTime(json.Start, json.End, json.RoomID) {
-// 		return c.Status(http.StatusBadRequest).SendString("Reservation times overlap with existing reservation")
-// 	}
+	// parse json
+	reqBody := new(models.NewReservation)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
+	}
 
-// 	// replace users with given users
-// 	var users []models.User
-// 	if len(json.UserIDs) > 0 {
-// 		db.Find(&users, json.UserIDs)
-// 	}
-// 	err = db.Model(&reservation).Association("Users").Replace(users)
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Invalid users provided")
-// 	}
+	// get user from context
+	user, ok := ctx.Value("user").(models.User)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
 
-// 	// update fields and save
-// 	reservation.Title = json.Title
-// 	reservation.Description = json.Description
-// 	reservation.Start = json.Start
-// 	reservation.End = json.End
-// 	reservation.RoomID = json.RoomID
-// 	err = db.Save(&reservation).Error
-// 	if err != nil {
-// 		return c.Status(http.StatusBadRequest).SendString("Unable to update reservation")
-// 	}
+	// check if user id from middleware matches reservation's created by field
+	if reservation.CreatedByID != user.ID {
+		http.Error(res, "Must be reservation creator to update", http.StatusBadRequest)
+		return
+	}
 
-// 	return c.Status(http.StatusOK).JSON(reservation)
-// }
+	// validate given start and end times
+	if reqBody.End.Before(reqBody.Start) {
+		http.Error(res, "Start time must be before end time", http.StatusBadRequest)
+		return
+	}
+	if utils.CheckOverlappingTime(reservation.ID, reqBody.Start, reqBody.End, reqBody.RoomID) {
+		http.Error(res, "Reservation time overlaps with an existing reservation for the given reservation", http.StatusBadRequest)
+		return
+	}
+
+	// replace users with given users
+	var users []models.User
+	if len(reqBody.UserIDs) > 0 {
+		db.Find(&users, reqBody.UserIDs)
+	}
+	err = db.Model(&reservation).Association("Users").Replace(users)
+	if err != nil {
+		http.Error(res, "Invalid users provided", http.StatusBadRequest)
+		return
+	}
+
+	// update fields and save
+	reservation.Title = reqBody.Title
+	reservation.Description = reqBody.Description
+	reservation.Start = reqBody.Start
+	reservation.End = reqBody.End
+	reservation.RoomID = reqBody.RoomID
+	err = db.Save(&reservation).Error
+	if err != nil {
+		http.Error(res, "Unable to update reservation", http.StatusBadRequest)
+		return
+	}
+
+	utils.RespondWithJson(res, 200, reservation)
+}

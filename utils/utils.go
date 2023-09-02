@@ -28,24 +28,10 @@ func CheckPasswordHash(password string, hash []byte) bool {
 	return err == nil
 }
 
-// // Gets user id from jwt token in ctx locals
-// func GetUserIdFromCtx(c *fiber.Ctx) uint {
-// 	return uint((c.Locals("user").(*jwt.Token)).Claims.(jwt.MapClaims)["id"].(float64))
-// }
-
-// // Gets id from url
-// func GetIdFromCtx(c *fiber.Ctx) (uint, error) {
-// 	id, err := c.ParamsInt("id")
-// 	if err != nil || id < 1 {
-// 		return 0, errors.New("invalid parameter")
-// 	}
-// 	return uint(id), nil
-// }
-
-func CheckOverlappingTime(start time.Time, end time.Time, roomId uint) bool {
+func CheckOverlappingTime(id uint, start time.Time, end time.Time, roomId uint) bool {
 	db := database.DB
 	var Found bool
-	db.Raw("SELECT EXISTS(SELECT 1 FROM reservations WHERE reservations.start <= ? AND reservations.end >= ? AND reservations.room_id = ?) AS found", end, start, roomId).Scan(&Found)
+	db.Raw("SELECT EXISTS(SELECT 1 FROM reservations WHERE reservations.id != ? AND reservations.start <= ? AND reservations.end >= ? AND reservations.room_id = ?) AS found", id, end, start, roomId).Scan(&Found)
 	return Found
 }
 
