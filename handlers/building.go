@@ -63,8 +63,26 @@ func CreateBuilding(res http.ResponseWriter, req *http.Request) {
 
 func GetBuildings(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
+	// build sql based on query string
+	query := req.URL.Query()
+	sql := "SELECT * FROM buildings "
+	if query.Get("name") != "" {
+		sql += "WHERE buildings.name ILIKE '%" + query.Get("name") + "%' "
+	}
+	sql += "ORDER BY buildings.id ASC LIMIT "
+	if query.Get("limit") != "" {
+		sql += query.Get("limit")
+	} else {
+		sql += "100"
+	}
+
+	// run sql
 	Buildings := []models.Building{}
-	db.Model(&models.Building{}).Order("ID asc").Limit(100).Find(&Buildings)
+	err := db.Raw(sql).Scan(&Buildings).Error
+	if err != nil {
+		http.Error(res, "Could not get buildings from database", http.StatusBadRequest)
+		return
+	}
 	utils.RespondWithJson(res, 200, Buildings)
 }
 
