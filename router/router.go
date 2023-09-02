@@ -31,6 +31,11 @@ func Initialize(r *chi.Mux) {
 		})
 	})
 
+	// user
+	r.Route("/user", func(r chi.Router) {
+		r.With(middleware.Protected).Get("/reservation", handlers.GetUserReservations)
+	})
+
 	// building
 	r.Route("/building", func(r chi.Router) {
 		r.With(middleware.Protected, middleware.Admin).Post("/", handlers.CreateBuilding)
