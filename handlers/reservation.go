@@ -31,7 +31,7 @@ func ReservationCtx(next http.Handler) http.Handler {
 			"buildings.id AS \"Room__Floor__Building__id\", buildings.name AS \"Room__Floor__Building__name\", buildings.address AS \"Room__Floor__Building__address\" "+
 			"FROM reservations LEFT JOIN rooms ON reservations.room_id = rooms.id "+
 			"LEFT JOIN floors ON rooms.floor_id = floors.id "+
-			"LEFT JOIN buildings ON floors.building_id = buildings.id WHERE rooms.id = ? LIMIT 1", id).Scan(&reservation).Error
+			"LEFT JOIN buildings ON floors.building_id = buildings.id WHERE reservations.id = ? LIMIT 1", id).Scan(&reservation).Error
 		if err != nil || reservation.ID == 0 {
 			http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
@@ -66,6 +66,16 @@ func CreateReservation(res http.ResponseWriter, req *http.Request) {
 	// get user from ctx
 	user := req.Context().Value("user").(models.User)
 
+	// handle users
+	var users []*models.User
+	if len(reqBody.UserIDs) > 0 {
+		db.Find(&users, reqBody.UserIDs)
+	}
+	if utils.ExceedsRoomCapacity(len(users), reqBody.RoomID) {
+		http.Error(res, "Number of users exceeds room capacity", http.StatusBadRequest)
+		return
+	}
+
 	// create reservation
 	newReservation := models.Reservation{
 		Title:       reqBody.Title,
@@ -74,21 +84,11 @@ func CreateReservation(res http.ResponseWriter, req *http.Request) {
 		End:         reqBody.End,
 		CreatedByID: user.ID,
 		RoomID:      reqBody.RoomID,
+		Users:       users,
 	}
 	err = db.Create(&newReservation).Error
 	if err != nil {
 		http.Error(res, "Unable to create reservation", http.StatusBadRequest)
-		return
-	}
-
-	// handle users
-	var users []models.User
-	if len(reqBody.UserIDs) > 0 {
-		db.Find(&users, reqBody.UserIDs)
-	}
-	err = db.Model(&newReservation).Association("Users").Replace(users)
-	if err != nil {
-		http.Error(res, "Invalid users provided", http.StatusBadRequest)
 		return
 	}
 
@@ -160,14 +160,13 @@ func UpdateReservation(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// replace users with given users
-	var users []models.User
+	// handle users
+	var users []*models.User
 	if len(reqBody.UserIDs) > 0 {
 		db.Find(&users, reqBody.UserIDs)
 	}
-	err = db.Model(&reservation).Association("Users").Replace(users)
-	if err != nil {
-		http.Error(res, "Invalid users provided", http.StatusBadRequest)
+	if utils.ExceedsRoomCapacity(len(users), reqBody.RoomID) {
+		http.Error(res, "Number of users exceeds room capacity", http.StatusBadRequest)
 		return
 	}
 
@@ -177,6 +176,7 @@ func UpdateReservation(res http.ResponseWriter, req *http.Request) {
 	reservation.Start = reqBody.Start
 	reservation.End = reqBody.End
 	reservation.RoomID = reqBody.RoomID
+	db.Model(&reservation).Association("Users").Replace(users)
 	err = db.Save(&reservation).Error
 	if err != nil {
 		http.Error(res, "Unable to update reservation", http.StatusBadRequest)

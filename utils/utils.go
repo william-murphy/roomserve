@@ -35,6 +35,13 @@ func CheckOverlappingTime(id uint, start time.Time, end time.Time, roomId uint) 
 	return Found
 }
 
+func ExceedsRoomCapacity(numUsers int, roomId uint) bool {
+	db := database.DB
+	var Found bool
+	db.Raw("SELECT true AS found FROM rooms WHERE id = ? AND capacity < ?", roomId, numUsers).Scan(&Found)
+	return Found
+}
+
 func ConvertSearchQuery(query string) string {
 	re := regexp.MustCompile("[^A-Za-z0-9]+")
 	splitQuery := re.Split(query, -1)
