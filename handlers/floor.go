@@ -66,10 +66,45 @@ func CreateFloor(res http.ResponseWriter, req *http.Request) {
 
 func GetFloors(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
+	// build sql based on query string
+	query := req.URL.Query()
+	params := []interface{}{}
+	sql := "SELECT floors.*, buildings.id AS \"Building__id\", buildings.name AS \"Building__name\", buildings.address AS \"Building__address\" " +
+		"FROM floors LEFT JOIN buildings ON floors.building_id = buildings.id WHERE floors.id = floors.id "
+	if query.Get("name") != "" {
+		sql += "AND floors.name ILIKE ? "
+		params = append(params, "%"+query.Get("name")+"%")
+	}
+	if query.Get("level") != "" {
+		sql += "AND floors.level = ? "
+		params = append(params, query.Get("level"))
+	}
+	if query.Get("minLevel") != "" {
+		sql += "AND floors.level >= ? "
+		params = append(params, query.Get("minLevel"))
+	}
+	if query.Get("maxLevel") != "" {
+		sql += "AND floors.level <= ? "
+		params = append(params, query.Get("maxLevel"))
+	}
+	if query.Get("buildingId") != "" {
+		sql += "AND floors.building_id = ? "
+		params = append(params, query.Get("buildingId"))
+	}
+	if query.Get("limit") != "" {
+		sql += "ORDER BY floors.id ASC LIMIT ?"
+		params = append(params, query.Get("limit"))
+	} else {
+		sql += "ORDER BY floors.id ASC LIMIT 100"
+	}
+
+	// run sql
 	Floors := []models.Floor{}
-	db.Raw("SELECT floors.*, " +
-		"buildings.id AS \"Building__id\", buildings.name AS \"Building__name\", buildings.address AS \"Building__address\" " +
-		"FROM floors LEFT JOIN buildings ON floors.building_id = buildings.id ORDER BY floors.id ASC LIMIT 100").Scan(&Floors)
+	err := db.Raw(sql, params...).Scan(&Floors).Error
+	if err != nil {
+		http.Error(res, "Could not get floors from database", http.StatusBadRequest)
+		return
+	}
 	utils.RespondWithJson(res, 200, Floors)
 }
 

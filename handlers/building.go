@@ -65,15 +65,15 @@ func GetBuildings(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
 	// build sql based on query string
 	query := req.URL.Query()
-	params := []string{}
-	sql := "SELECT * FROM buildings WHERE "
+	params := []interface{}{}
+	sql := "SELECT * FROM buildings WHERE buildings.id = buildings.id "
 	if query.Get("name") != "" {
-		sql += "buildings.name ILIKE '%?%' "
-		params = append(params, query.Get("name"))
+		sql += "AND buildings.name ILIKE ? "
+		params = append(params, "%"+query.Get("name")+"%")
 	}
 	if query.Get("address") != "" {
-		sql += "buildings.address ILIKE '%?%' "
-		params = append(params, query.Get("address"))
+		sql += "AND buildings.address ILIKE %?% "
+		params = append(params, "%"+query.Get("address")+"%")
 	}
 	if query.Get("limit") != "" {
 		sql += "ORDER BY buildings.id ASC LIMIT ?"
@@ -84,7 +84,7 @@ func GetBuildings(res http.ResponseWriter, req *http.Request) {
 
 	// run sql
 	Buildings := []models.Building{}
-	err := db.Raw(sql, params).Scan(&Buildings).Error
+	err := db.Raw(sql, params...).Scan(&Buildings).Error
 	if err != nil {
 		http.Error(res, "Could not get buildings from database", http.StatusBadRequest)
 		return
