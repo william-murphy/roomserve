@@ -69,12 +69,50 @@ func CreateRoom(res http.ResponseWriter, req *http.Request) {
 
 func GetRooms(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
-	Rooms := []models.Room{}
-	db.Raw("SELECT rooms.*, " +
-		"floors.id AS \"Floor__id\", floors.name AS \"Floor__name\", floors.level AS \"Floor__level\", " +
+	// build sql based on query string
+	query := req.URL.Query()
+	params := []interface{}{}
+	sql := "SELECT rooms.*, floors.id AS \"Floor__id\", floors.name AS \"Floor__name\", floors.level AS \"Floor__level\", " +
 		"buildings.id AS \"Floor__Building__id\", buildings.name AS \"Floor__Building__name\", buildings.address AS \"Floor__Building__address\" " +
-		"FROM rooms LEFT JOIN floors ON rooms.floor_id = floors.id " +
-		"LEFT JOIN buildings ON floors.building_id = buildings.id ORDER BY rooms.id ASC LIMIT 100").Scan(&Rooms)
+		"FROM rooms LEFT JOIN floors ON rooms.floor_id = floors.id LEFT JOIN buildings ON floors.building_id = buildings.id WHERE rooms.id = rooms.id "
+	if query.Get("name") != "" {
+		sql += "AND rooms.name ILIKE ? "
+		params = append(params, "%"+query.Get("name")+"%")
+	}
+	if query.Get("number") != "" {
+		sql += "AND rooms.number = ? "
+		params = append(params, query.Get("number"))
+	}
+	if query.Get("capacity") != "" {
+		sql += "AND rooms.capacity = ? "
+		params = append(params, query.Get("capacity"))
+	}
+	if query.Get("minCapacity") != "" {
+		sql += "AND rooms.capacity >= ? "
+		params = append(params, query.Get("minCapacity"))
+	}
+	if query.Get("maxCapacity") != "" {
+		sql += "AND rooms.capacity <= ? "
+		params = append(params, query.Get("maxCapacity"))
+	}
+	if query.Get("floorId") != "" {
+		sql += "AND rooms.floor_id = ? "
+		params = append(params, query.Get("floorId"))
+	}
+	if query.Get("limit") != "" {
+		sql += "ORDER BY rooms.id ASC LIMIT ?"
+		params = append(params, query.Get("limit"))
+	} else {
+		sql += "ORDER BY rooms.id ASC LIMIT 100"
+	}
+
+	// run sql
+	Rooms := []models.Room{}
+	err := db.Raw(sql, params...).Scan(&Rooms).Error
+	if err != nil {
+		http.Error(res, "Could not get rooms from database", http.StatusBadRequest)
+		return
+	}
 	utils.RespondWithJson(res, 200, Rooms)
 }
 
