@@ -97,14 +97,65 @@ func CreateReservation(res http.ResponseWriter, req *http.Request) {
 
 func GetReservations(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
-	Reservations := []models.Reservation{}
-	db.Raw("SELECT reservations.*, " +
-		"rooms.id AS \"Room__id\", rooms.name AS \"Room__name\", rooms.number AS \"Room__number\", rooms.capacity AS \"Room__capacity\", " +
+	// build sql based on query string
+	query := req.URL.Query()
+	params := []interface{}{}
+	sql := "SELECT reservations.*, rooms.id AS \"Room__id\", rooms.name AS \"Room__name\", rooms.number AS \"Room__number\", rooms.capacity AS \"Room__capacity\", " +
 		"floors.id AS \"Room__Floor__id\", floors.name AS \"Room__Floor__name\", floors.level AS \"Room__Floor__level\", " +
 		"buildings.id AS \"Room__Floor__Building__id\", buildings.name AS \"Room__Floor__Building__name\", buildings.address AS \"Room__Floor__Building__address\" " +
 		"FROM reservations LEFT JOIN rooms ON reservations.room_id = rooms.id " +
 		"LEFT JOIN floors ON rooms.floor_id = floors.id " +
-		"LEFT JOIN buildings ON floors.building_id = buildings.id ORDER BY reservations.id ASC LIMIT 100").Scan(&Reservations)
+		"LEFT JOIN buildings ON floors.building_id = buildings.id WHERE reservations.id = reservations.id "
+	if query.Get("title") != "" {
+		sql += "AND reservations.title ILIKE ? "
+		params = append(params, "%"+query.Get("title")+"%")
+	}
+	if query.Get("description") != "" {
+		sql += "AND reservations.description ILIKE ? "
+		params = append(params, "%"+query.Get("description")+"%")
+	}
+	if query.Get("startBefore") != "" {
+		sql += "AND reservations.start <= ? "
+		params = append(params, query.Get("startBefore"))
+	}
+	if query.Get("startAfter") != "" {
+		sql += "AND reservations.start >= ? "
+		params = append(params, query.Get("startAfter"))
+	}
+	if query.Get("endBefore") != "" {
+		sql += "AND reservations.end <= ? "
+		params = append(params, query.Get("endBefore"))
+	}
+	if query.Get("endAfter") != "" {
+		sql += "AND reservations.end >= ? "
+		params = append(params, query.Get("endAfter"))
+	}
+	if query.Get("roomId") != "" {
+		sql += "AND reservations.room_id = ? "
+		params = append(params, query.Get("roomId"))
+	}
+	if query.Get("floorId") != "" {
+		sql += "AND rooms.floor_id = ? "
+		params = append(params, query.Get("floorId"))
+	}
+	if query.Get("buildingId") != "" {
+		sql += "AND floors.building_id = ? "
+		params = append(params, query.Get("buildingId"))
+	}
+	if query.Get("limit") != "" {
+		sql += "ORDER BY reservations.id ASC LIMIT ?"
+		params = append(params, query.Get("limit"))
+	} else {
+		sql += "ORDER BY reservations.id ASC LIMIT 100"
+	}
+
+	// run sql
+	Reservations := []models.Reservation{}
+	err := db.Raw(sql, params...).Scan(&Reservations).Error
+	if err != nil {
+		http.Error(res, "Could not get reservations from database", http.StatusBadRequest)
+		return
+	}
 	utils.RespondWithJson(res, 200, Reservations)
 }
 
