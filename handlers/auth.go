@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -49,4 +50,37 @@ func LoginUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	utils.RespondWithJson(res, 200, map[string]string{"token": token})
+}
+
+func RegisterUser(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// parse json
+	reqBody := new(models.RegisterUser)
+	err := json.NewDecoder(req.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
+		return
+	}
+
+	// create a hash of the given password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(reqBody.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(res, "Unable to register user", http.StatusNotAcceptable)
+		return
+	}
+
+	// create user (with hashed password)
+	newUser := models.User{
+		Name:     reqBody.Name,
+		Username: reqBody.Username,
+		Email:    reqBody.Email,
+		Password: hashedPassword,
+	}
+	err = db.Create(&newUser).Error
+	if err != nil {
+		http.Error(res, "Unable to register user", http.StatusNotAcceptable)
+		return
+	}
+
+	utils.RespondWithJson(res, 201, newUser)
 }

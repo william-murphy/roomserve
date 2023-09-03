@@ -170,6 +170,23 @@ func GetReservation(res http.ResponseWriter, req *http.Request) {
 	utils.RespondWithJson(res, 200, reservation)
 }
 
+func GetReservationUsers(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get reservation from context
+	ctx := req.Context()
+	reservation, ok := ctx.Value("reservation").(models.Reservation)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// get users that are associated with this reservation
+	Users := []models.User{}
+	db.Raw("SELECT * FROM users WHERE users.id IN (SELECT user_id FROM reservation_users WHERE reservation_id = ?)", reservation.ID).Scan(&Users)
+
+	utils.RespondWithJson(res, 200, Users)
+}
+
 func UpdateReservation(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
 	// get reservation from context

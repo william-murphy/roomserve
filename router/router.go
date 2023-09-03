@@ -76,6 +76,7 @@ func Initialize(r *chi.Mux) {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(handlers.ReservationCtx)
 			r.Get("/", handlers.GetReservation)
+			r.Get("/user", handlers.GetReservationUsers)
 			r.With(middleware.Protected).Put("/", handlers.UpdateReservation)
 		})
 	})

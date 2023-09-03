@@ -1,48 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"roomserve/database"
 	"roomserve/models"
 	"roomserve/utils"
-
-	"golang.org/x/crypto/bcrypt"
 )
-
-func RegisterUser(res http.ResponseWriter, req *http.Request) {
-	db := database.DB
-	// parse json
-	reqBody := new(models.RegisterUser)
-	err := json.NewDecoder(req.Body).Decode(&reqBody)
-	if err != nil {
-		http.Error(res, "Invalid JSON", http.StatusNotAcceptable)
-		return
-	}
-
-	// create a hash of the given password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(reqBody.Password), bcrypt.DefaultCost)
-	if err != nil {
-		http.Error(res, "Unable to register user", http.StatusNotAcceptable)
-		return
-	}
-
-	// create user (with hashed password)
-	newUser := models.User{
-		Name:     reqBody.Name,
-		Username: reqBody.Username,
-		Email:    reqBody.Email,
-		Password: hashedPassword,
-	}
-	err = db.Create(&newUser).Error
-	if err != nil {
-		http.Error(res, "Unable to register user", http.StatusNotAcceptable)
-		return
-	}
-
-	utils.RespondWithJson(res, 201, newUser)
-}
 
 func GetUserReservations(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
