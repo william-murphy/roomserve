@@ -169,6 +169,11 @@ func UpdateReservation(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "Number of users exceeds room capacity", http.StatusBadRequest)
 		return
 	}
+	err = db.Model(&reservation).Association("Users").Replace(users)
+	if err != nil {
+		http.Error(res, "Invalid users provided", http.StatusBadRequest)
+		return
+	}
 
 	// update fields and save
 	reservation.Title = reqBody.Title
@@ -176,7 +181,6 @@ func UpdateReservation(res http.ResponseWriter, req *http.Request) {
 	reservation.Start = reqBody.Start
 	reservation.End = reqBody.End
 	reservation.RoomID = reqBody.RoomID
-	db.Model(&reservation).Association("Users").Replace(users)
 	err = db.Save(&reservation).Error
 	if err != nil {
 		http.Error(res, "Unable to update reservation", http.StatusBadRequest)
