@@ -34,7 +34,7 @@ func Protected(next http.Handler) http.Handler {
 			}
 			return []byte(config.Config("SECRET")), nil
 		})
-		if err != nil || !token.Valid { // TODO - do i manually check if token is expired?
+		if err != nil || !token.Valid {
 			fmt.Println(err.Error())
 			http.Error(res, "Invalid or expired JWT", http.StatusUnauthorized)
 			return
