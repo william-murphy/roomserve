@@ -257,3 +257,32 @@ func UpdateReservation(res http.ResponseWriter, req *http.Request) {
 
 	utils.RespondWithJson(res, 200, reservation)
 }
+
+func DeleteReservation(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get reservation from context
+	ctx := req.Context()
+	reservation, ok := ctx.Value("reservation").(models.Reservation)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// get user from context
+	user, ok := ctx.Value("user").(models.User)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// check if user id from middleware matches reservation's created by field
+	if reservation.CreatedByID != user.ID {
+		http.Error(res, "Must be reservation creator to delete", http.StatusBadRequest)
+		return
+	}
+
+	// delete reservation
+	db.Delete(&reservation)
+
+	utils.RespondWithEmpty(res)
+}

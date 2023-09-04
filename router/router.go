@@ -44,6 +44,7 @@ func Initialize(r *chi.Mux) {
 			r.Use(handlers.BuildingCtx)
 			r.Get("/", handlers.GetBuilding)
 			r.With(middleware.Protected, middleware.Admin).Put("/", handlers.UpdateBuilding)
+			r.With(middleware.Protected, middleware.Admin).Delete("/", handlers.DeleteBuilding)
 		})
 	})
 
@@ -55,6 +56,7 @@ func Initialize(r *chi.Mux) {
 			r.Use(handlers.FloorCtx)
 			r.Get("/", handlers.GetFloor)
 			r.With(middleware.Protected, middleware.Admin).Put("/", handlers.UpdateFloor)
+			r.With(middleware.Protected, middleware.Admin).Delete("/", handlers.DeleteFloor)
 		})
 	})
 
@@ -66,6 +68,7 @@ func Initialize(r *chi.Mux) {
 			r.Use(handlers.RoomCtx)
 			r.Get("/", handlers.GetRoom)
 			r.With(middleware.Protected, middleware.Admin).Put("/", handlers.UpdateRoom)
+			r.With(middleware.Protected, middleware.Admin).Delete("/", handlers.DeleteRoom)
 		})
 	})
 
@@ -78,6 +81,7 @@ func Initialize(r *chi.Mux) {
 			r.Get("/", handlers.GetReservation)
 			r.Get("/user", handlers.GetReservationUsers)
 			r.With(middleware.Protected).Put("/", handlers.UpdateReservation)
+			r.With(middleware.Protected).Delete("/", handlers.DeleteReservation)
 		})
 	})
 

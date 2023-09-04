@@ -132,3 +132,19 @@ func UpdateBuilding(res http.ResponseWriter, req *http.Request) {
 
 	utils.RespondWithJson(res, 200, building)
 }
+
+func DeleteBuilding(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get building from context
+	ctx := req.Context()
+	building, ok := ctx.Value("building").(models.Building)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// delete reservation
+	db.Delete(&building)
+
+	utils.RespondWithEmpty(res)
+}

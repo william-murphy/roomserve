@@ -22,6 +22,10 @@ func RespondWithJson(res http.ResponseWriter, code int, payload interface{}) {
 	res.Write(response)
 }
 
+func RespondWithEmpty(res http.ResponseWriter) {
+	res.WriteHeader(http.StatusNoContent)
+}
+
 // CheckPasswordHash compares password with hash
 func CheckPasswordHash(password string, hash []byte) bool {
 	err := bcrypt.CompareHashAndPassword(hash, []byte(password))

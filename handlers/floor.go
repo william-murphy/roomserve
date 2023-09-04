@@ -149,3 +149,19 @@ func UpdateFloor(res http.ResponseWriter, req *http.Request) {
 
 	utils.RespondWithJson(res, 200, floor)
 }
+
+func DeleteFloor(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get floor from context
+	ctx := req.Context()
+	floor, ok := ctx.Value("floor").(models.Floor)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// delete reservation
+	db.Delete(&floor)
+
+	utils.RespondWithEmpty(res)
+}

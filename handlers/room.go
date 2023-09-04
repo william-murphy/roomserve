@@ -158,3 +158,19 @@ func UpdateRoom(res http.ResponseWriter, req *http.Request) {
 
 	utils.RespondWithJson(res, 200, room)
 }
+
+func DeleteRoom(res http.ResponseWriter, req *http.Request) {
+	db := database.DB
+	// get room from context
+	ctx := req.Context()
+	room, ok := ctx.Value("room").(models.Room)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+
+	// delete reservation
+	db.Delete(&room)
+
+	utils.RespondWithEmpty(res)
+}
