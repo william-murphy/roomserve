@@ -9,5 +9,11 @@ Requires installation of `Go`. Create a file called `.env`. Copy the contents of
 
 Run `go get` to install the dependencies used in the project. These dependencies are located in the `go.mod` file.
 
-## Run
-Ensure Postgres server is running. In the parent directory, run `go run .`
+## Dev
+Ensure Postgres server is running locally. Run `go run .` to run dev server.
+
+## Test
+Ensure Postgres server is running locally. Run `go test ./test` to run the tests.
+
+## Prod (WIP)
+Ensure production Postgres server is running. Run `go run . prod` to run prod server.
