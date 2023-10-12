@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestCreateBuilding(t *testing.T) {
+func TestCreateBuildingWithValidData(t *testing.T) {
 	// setup
 	db := database.DB
 	tx := db.Begin()
