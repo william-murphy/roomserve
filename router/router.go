@@ -38,7 +38,7 @@ func Initialize(r *chi.Mux) {
 
 	// building
 	r.Route("/building", func(r chi.Router) {
-		r.With(middleware.Protected, middleware.Admin).Post("/", handlers.CreateBuilding)
+		r. /*.With(middleware.Protected, middleware.Admin)*/ Post("/", handlers.CreateBuilding)
 		r.Get("/", handlers.GetBuildings)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(handlers.BuildingCtx)

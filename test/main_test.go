@@ -6,6 +6,7 @@ import (
 
 	"roomserve/config"
 	"roomserve/database"
+	"roomserve/models"
 )
 
 func TestMain(m *testing.M) {
@@ -17,6 +18,7 @@ func TestMain(m *testing.M) {
 	exitVal := m.Run()
 
 	// teardown
+	database.DB.Migrator().DropTable(&models.User{}, &models.Building{}, &models.Floor{}, &models.Room{}, &models.Reservation{}, "reservation_users")
 
 	// exit
 	os.Exit(exitVal)
