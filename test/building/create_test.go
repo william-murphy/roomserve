@@ -1,4 +1,4 @@
-package test
+package building
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"roomserve/database"
 	"roomserve/handlers"
 	"roomserve/models"
+	"roomserve/test"
 	"strings"
 	"testing"
 )
@@ -20,7 +21,7 @@ func TestCreateBuilding_Valid(t *testing.T) {
 		Name:    "test building name",
 		Address: "test building address",
 	}
-	req := MockPostRequest(t, body, "/building")
+	req := test.MockPostRequest(t, body, "/building")
 	rr := httptest.NewRecorder()
 
 	// run
@@ -57,7 +58,7 @@ func TestCreateBuilding_EmptyName(t *testing.T) {
 	body := models.NewBuilding{
 		Address: "test building address",
 	}
-	req := MockPostRequest(t, body, "/building")
+	req := test.MockPostRequest(t, body, "/building")
 	rr := httptest.NewRecorder()
 
 	// run
@@ -91,7 +92,7 @@ func TestCreateBuilding_NameTooLong(t *testing.T) {
 		Name:    strings.Repeat("x", 65),
 		Address: "test building address",
 	}
-	req := MockPostRequest(t, body, "/building")
+	req := test.MockPostRequest(t, body, "/building")
 	rr := httptest.NewRecorder()
 
 	// run
@@ -112,7 +113,7 @@ func TestCreateBuilding_EmptyAddress(t *testing.T) {
 	body := models.NewBuilding{
 		Name: "test building name",
 	}
-	req := MockPostRequest(t, body, "/building")
+	req := test.MockPostRequest(t, body, "/building")
 	rr := httptest.NewRecorder()
 
 	// run
@@ -146,7 +147,7 @@ func TestCreateBuilding_AddressTooLong(t *testing.T) {
 		Name:    "test building name",
 		Address: strings.Repeat("x", 2049),
 	}
-	req := MockPostRequest(t, body, "/building")
+	req := test.MockPostRequest(t, body, "/building")
 	rr := httptest.NewRecorder()
 
 	// run

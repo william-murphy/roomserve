@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -14,6 +13,9 @@ func MockPostRequest(t *testing.T, body interface{}, route string) *http.Request
 	if err != nil {
 		t.Fatal("Error encoding body to json")
 	}
-	req := httptest.NewRequest(http.MethodPost, route, &buf)
+	req, err := http.NewRequest(http.MethodPost, route, &buf)
+	if err != nil {
+		t.Fatal("Error creating mock request")
+	}
 	return req
 }
