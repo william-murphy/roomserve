@@ -1,7 +1,6 @@
 package test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -225,12 +224,8 @@ func TestGetBuilding_Valid(t *testing.T) {
 		Name:    "test building name",
 		Address: "test building address",
 	}
-	err := tx.Create(&newBuilding).Error
-	if err != nil {
-		t.Fatal("Error creating a building")
-	}
+	ctx := MockBuildingContext(t, &newBuilding)
 
-	ctx := context.WithValue(context.Background(), "building", newBuilding)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/building/%d", newBuilding.ID), nil)
 	if err != nil {
 		t.Fatal("Could not create mock request")
