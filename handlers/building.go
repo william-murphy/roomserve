@@ -72,7 +72,7 @@ func GetBuildings(res http.ResponseWriter, req *http.Request) {
 		params = append(params, "%"+query.Get("name")+"%")
 	}
 	if query.Get("address") != "" {
-		sql += "AND buildings.address ILIKE %?% "
+		sql += "AND buildings.address ILIKE ? "
 		params = append(params, "%"+query.Get("address")+"%")
 	}
 	if query.Get("limit") != "" {
