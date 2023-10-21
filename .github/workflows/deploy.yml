@@ -15,8 +15,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: test
-      run: ls .
+    - name: test1
+      run: ls ./test
+    - name:
+      run: git status
     - name: Run docker compose up
       run: docker compose -f ./test/docker-compose.yml up --exit-code-from test --build
     - name: Prune docker containers and images
