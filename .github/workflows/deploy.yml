@@ -18,6 +18,6 @@ jobs:
     - name: Prune docker volumes
       run: docker volume prune -f
     - name: test
-        if: steps.s1.outcome != 0
-        run: exit 1
+      if: steps.s1.outcome != 0
+      run: exit 1
     
