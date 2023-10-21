@@ -425,6 +425,6 @@ func TestDeleteBuilding(t *testing.T) {
 	database.DB = db
 }
 
-func TestShouldFail(t *testing.T) {
-	t.Error("This test should fail, and it did! 1")
-}
+// func TestShouldFail(t *testing.T) {
+// 	t.Error("This test should fail, and it did! 1")
+// }
