@@ -3,7 +3,7 @@ name: Testing Pipeline
 on:
   push:
     branches:
-      - "**"
+      - "*"
 
 jobs:
   build:
