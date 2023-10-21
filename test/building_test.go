@@ -426,5 +426,5 @@ func TestDeleteBuilding(t *testing.T) {
 }
 
 func TestShouldFail(t *testing.T) {
-	t.Error("This test should fail, and it did!")
+	t.Error("This test should fail, and it did! 1")
 }
