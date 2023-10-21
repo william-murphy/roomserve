@@ -10,16 +10,17 @@ jobs:
     runs-on: self-hosted
     steps:
     - uses: actions/checkout@v3
-    - id: s1
       name: Run docker compose up
-      run: docker compose -f ./test/docker-compose.yml up --exit-code-from test --build
+      run: exit_code = $(docker compose -f ./test/docker-compose.yml up --exit-code-from test --build)
     - name: Prune docker containers and images
       run: docker system prune -f
     - name: Prune docker volumes
       run: docker volume prune -f
-    - name: test1
-      run: echo ${{ steps.s1.outputs }}
-    - name: test2
-      if: steps.s1.outcome != 0
-      run: exit 1
+    - name: asdasd
+      run: |
+        if [ $exit_code -ne 0 ]; then
+          exit 1
+        fi
+      
+
 
