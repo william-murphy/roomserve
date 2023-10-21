@@ -424,3 +424,7 @@ func TestDeleteBuilding(t *testing.T) {
 	tx.Rollback()
 	database.DB = db
 }
+
+func TestShouldFail(t *testing.T) {
+	t.Error("This test should fail, and it did!")
+}

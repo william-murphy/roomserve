@@ -1,0 +1,22 @@
+name: Testing Pipeline
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        working-directory: /root/roomserve
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run docker compose up
+      run: docker compose -f ./test/docker-compose.yml up --exit-code-from test --build
+    - name: Prune docker containers and images
+      run: docker system prune -f
+      run: docker volume prune -f

@@ -1,0 +1,21 @@
+version: '3'
+services:
+  # Database service
+  database:
+    image: postgres:14.9
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  # Go testing service
+  test:
+    build:
+      context: ../
+      dockerfile: test/Dockerfile.test
+    links:
+      - database
+    environment:
+      POSTGRES_HOST: database
