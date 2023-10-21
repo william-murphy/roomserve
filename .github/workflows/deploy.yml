@@ -18,7 +18,7 @@ jobs:
     - name: Prune docker volumes
       run: docker volume prune -f
     - name: test1
-      run: echo ${{ steps.s1.outcome }} poop ${{ steps.s1.conclusion }}
+      run: echo ${{ steps.s1.outputs }}
     - name: test2
       if: steps.s1.outcome != 0
       run: exit 1
