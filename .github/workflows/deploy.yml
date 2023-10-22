@@ -24,7 +24,7 @@ jobs:
     # - name: Exit based on test result
     #   run: exit $EXIT_CODE
   cleanup:
-    # runs-on: self-hosted
+    runs-on: self-hosted
     steps:
       - name: Remove docker containers
         run: docker system prune -f
