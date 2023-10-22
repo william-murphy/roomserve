@@ -11,7 +11,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run docker compose up
-      run: exit_code = $(docker compose -f ./test/docker-compose.yml up --exit-code-from test --build)
+      run: docker compose -f ./test/docker-compose.yml up --exit-code-from test --build
+    - name: test1
+      run: echo $?
     - name: Prune docker containers and images
       run: docker system prune -f
     - name: Prune docker volumes
