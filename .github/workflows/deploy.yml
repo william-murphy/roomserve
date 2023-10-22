@@ -13,16 +13,29 @@ jobs:
     - name: Run docker compose up
       run: docker compose -f ./test/docker-compose.yml up --exit-code-from test --build
       continue-on-error: true
-    - name: Store result of docker compose
+    - name: Check result of tests
       run: |
-        EXIT_CODE=$(docker inspect test-test-1 --format='{{.State.ExitCode}}')
-        echo $EXIT_CODE
-    - name: Prune docker containers and images
-      run: docker system prune -f
-    - name: Prune docker volumes
-      run: docker volume prune -f
-    - name: Exit based on test result
-      run: exit $EXIT_CODE
+        if [[ ${{ success() }} == 'true' ]]; then
+          exit 0
+        else
+          exit 1
+        fi
+      if: ${{ always() }}
+        run: |
+          docker system prune -f
+          docker volume prune -f
+    # - name: Store result of docker compose
+    #   run: |
+    #     EXIT_CODE=$(docker inspect test-test-1 --format='{{.State.ExitCode}}')
+    #     echo $EXIT_CODE
+
+    # - name: Prune docker containers and images
+    #   run: docker system prune -f
+    # - name: Prune docker volumes
+    #   run: docker volume prune -f
+    # - name: Exit based on test result
+    #   run: exit $EXIT_CODE
+
       
 
 
