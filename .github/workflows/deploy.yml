@@ -21,9 +21,9 @@ jobs:
           exit 1
         fi
       if: ${{ always() }}
-        run: |
-          docker system prune -f
-          docker volume prune -f
+      run: |
+        docker system prune -f
+        docker volume prune -f
     # - name: Store result of docker compose
     #   run: |
     #     EXIT_CODE=$(docker inspect test-test-1 --format='{{.State.ExitCode}}')
