@@ -25,6 +25,7 @@ jobs:
     #   run: exit $EXIT_CODE
   cleanup:
     runs-on: self-hosted
+    needs: [build]
     steps:
       - name: Remove docker containers
         run: docker system prune -f
