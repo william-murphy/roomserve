@@ -1,5 +1,5 @@
-# roomserve
-Room Reservation System API written in Go using the Chi router library and Gorm ORM.
+# Roomserve API
+Backend API for the Roomserve room reversation system written in Go using the Chi router library and Gorm ORM.
 
 ## Build
 Requires installation of `Go`. Create a file called `.env` in the parent directory and in the `/test` directory. Copy the contents of `example.env` into each. Populate the database credentials. Populate the 'secret' which can be anything and is used to sign JWTs for authentication. Populate the default admin email and password.
