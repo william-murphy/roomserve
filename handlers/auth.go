@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 func LoginUser(res http.ResponseWriter, req *http.Request) {
@@ -26,8 +25,8 @@ func LoginUser(res http.ResponseWriter, req *http.Request) {
 
 	// find user by email
 	user := models.User{}
-	err = db.Raw("SELECT * FROM users WHERE email = ?", reqBody.Email).Scan(&user).Error
-	if err == gorm.ErrRecordNotFound {
+	db.Raw("SELECT * FROM users WHERE email = ?", reqBody.Email).Scan(&user)
+	if user.ID < 1 {
 		http.Error(res, "Email not found", http.StatusBadRequest)
 		return
 	}
