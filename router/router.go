@@ -34,6 +34,7 @@ func Initialize(r *chi.Mux) {
 	// user
 	r.Route("/user", func(r chi.Router) {
 		r.Use(middleware.Protected)
+		r.Get("/", handlers.GetUser)
 		r.Get("/reservation", handlers.GetUserReservations)
 	})
 

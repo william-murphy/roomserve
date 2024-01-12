@@ -8,6 +8,16 @@ import (
 	"roomserve/utils"
 )
 
+func GetUser(res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	user, ok := ctx.Value("user").(models.User)
+	if !ok {
+		http.Error(res, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		return
+	}
+	utils.RespondWithJson(res, 200, user)
+}
+
 func GetUserReservations(res http.ResponseWriter, req *http.Request) {
 	db := database.DB
 	// get user from context
