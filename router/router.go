@@ -13,6 +13,7 @@ func Initialize(r *chi.Mux) {
 	fs := http.FileServer(http.Dir("./static"))
 
 	r.Use(middleware.Json)
+	r.Use(middleware.Cors)
 
 	// serve home page static html
 	r.Get("/", func(res http.ResponseWriter, req *http.Request) {
